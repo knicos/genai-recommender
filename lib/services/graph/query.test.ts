@@ -1,24 +1,27 @@
 import { describe, it, beforeEach } from 'vitest';
-import { resetGraph } from './state';
-import { addNode } from './nodes';
-import { addEdge } from './edges';
-import { getRelated } from './query';
+import GraphService from './graphService';
+import ServiceBroker from '../broker';
 
 describe('graph.getRelated', () => {
-    beforeEach(() => resetGraph());
+    let broker = new ServiceBroker();
+    let service = new GraphService(broker);
+    beforeEach(() => {
+        broker = new ServiceBroker();
+        service = new GraphService(broker);
+    });
 
     it('sorts the results by weight', async ({ expect }) => {
-        const userIds = [addNode('user'), addNode('user'), addNode('user')];
+        const userIds = [service.addNode('user'), service.addNode('user'), service.addNode('user')];
 
-        const contentIds = [addNode('content'), addNode('content'), addNode('content')];
+        const contentIds = [service.addNode('content'), service.addNode('content'), service.addNode('content')];
 
-        addEdge('engaged', userIds[0], contentIds[1], 1.0);
-        addEdge('engaged', userIds[0], contentIds[0], 2.0);
-        addEdge('engaged', userIds[0], contentIds[2], 3.0);
-        addEdge('liked', userIds[0], contentIds[2], 4.0);
-        addEdge('engaged', userIds[1], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[0], 2.0);
+        service.addEdge('engaged', userIds[0], contentIds[2], 3.0);
+        service.addEdge('liked', userIds[0], contentIds[2], 4.0);
+        service.addEdge('engaged', userIds[1], contentIds[1], 1.0);
 
-        const related = getRelated('engaged', userIds[0]);
+        const related = service.getRelated('engaged', userIds[0]);
 
         expect(related).toHaveLength(3);
         expect(related[0].weight).toBe(3);
@@ -28,17 +31,17 @@ describe('graph.getRelated', () => {
     });
 
     it('limits the number of results', async ({ expect }) => {
-        const userIds = [addNode('user'), addNode('user'), addNode('user')];
+        const userIds = [service.addNode('user'), service.addNode('user'), service.addNode('user')];
 
-        const contentIds = [addNode('content'), addNode('content'), addNode('content')];
+        const contentIds = [service.addNode('content'), service.addNode('content'), service.addNode('content')];
 
-        addEdge('engaged', userIds[0], contentIds[1], 1.0);
-        addEdge('engaged', userIds[0], contentIds[0], 2.0);
-        addEdge('engaged', userIds[0], contentIds[2], 3.0);
-        addEdge('liked', userIds[0], contentIds[2], 4.0);
-        addEdge('engaged', userIds[1], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[0], 2.0);
+        service.addEdge('engaged', userIds[0], contentIds[2], 3.0);
+        service.addEdge('liked', userIds[0], contentIds[2], 4.0);
+        service.addEdge('engaged', userIds[1], contentIds[1], 1.0);
 
-        const related = getRelated('engaged', userIds[0], { count: 2 });
+        const related = service.getRelated('engaged', userIds[0], { count: 2 });
 
         expect(related).toHaveLength(2);
         expect(related[0].weight).toBe(3);
@@ -47,17 +50,17 @@ describe('graph.getRelated', () => {
     });
 
     it('limits by time', async ({ expect }) => {
-        const userIds = [addNode('user'), addNode('user'), addNode('user')];
+        const userIds = [service.addNode('user'), service.addNode('user'), service.addNode('user')];
 
-        const contentIds = [addNode('content'), addNode('content'), addNode('content')];
+        const contentIds = [service.addNode('content'), service.addNode('content'), service.addNode('content')];
 
-        addEdge('engaged', userIds[0], contentIds[1], 1.0);
-        addEdge('engaged', userIds[0], contentIds[0], 2.0);
-        addEdge('engaged', userIds[0], contentIds[2], 3.0, 1000);
-        addEdge('liked', userIds[0], contentIds[2], 4.0);
-        addEdge('engaged', userIds[1], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[0], 2.0);
+        service.addEdge('engaged', userIds[0], contentIds[2], 3.0, 1000);
+        service.addEdge('liked', userIds[0], contentIds[2], 4.0);
+        service.addEdge('engaged', userIds[1], contentIds[1], 1.0);
 
-        const related = getRelated('engaged', userIds[0], { count: 3, period: 5 * 60 * 1000 });
+        const related = service.getRelated('engaged', userIds[0], { count: 3, period: 5 * 60 * 1000 });
 
         expect(related).toHaveLength(2);
         expect(related[0].weight).toBe(2);
@@ -66,17 +69,17 @@ describe('graph.getRelated', () => {
     });
 
     it('limits by strict time', async ({ expect }) => {
-        const userIds = [addNode('user'), addNode('user'), addNode('user')];
+        const userIds = [service.addNode('user'), service.addNode('user'), service.addNode('user')];
 
-        const contentIds = [addNode('content'), addNode('content'), addNode('content')];
+        const contentIds = [service.addNode('content'), service.addNode('content'), service.addNode('content')];
 
-        addEdge('engaged', userIds[0], contentIds[1], 1.0);
-        addEdge('engaged', userIds[0], contentIds[0], 2.0);
-        addEdge('engaged', userIds[0], contentIds[2], 3.0, 1000);
-        addEdge('liked', userIds[0], contentIds[2], 4.0);
-        addEdge('engaged', userIds[1], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[0], 2.0);
+        service.addEdge('engaged', userIds[0], contentIds[2], 3.0, 1000);
+        service.addEdge('liked', userIds[0], contentIds[2], 4.0);
+        service.addEdge('engaged', userIds[1], contentIds[1], 1.0);
 
-        const related = getRelated('engaged', userIds[0], { count: 3, strictPeriod: 5 * 60 * 1000 });
+        const related = service.getRelated('engaged', userIds[0], { count: 3, strictPeriod: 5 * 60 * 1000 });
 
         expect(related).toHaveLength(2);
         expect(related[0].weight).toBe(2);
@@ -85,15 +88,15 @@ describe('graph.getRelated', () => {
     });
 
     it('weights by time', async ({ expect }) => {
-        const userIds = [addNode('user'), addNode('user'), addNode('user')];
+        const userIds = [service.addNode('user'), service.addNode('user'), service.addNode('user')];
 
-        const contentIds = [addNode('content'), addNode('content'), addNode('content')];
+        const contentIds = [service.addNode('content'), service.addNode('content'), service.addNode('content')];
 
-        addEdge('engaged', userIds[0], contentIds[1], 1.0);
-        addEdge('engaged', userIds[0], contentIds[0], 2.0);
-        addEdge('engaged', userIds[0], contentIds[2], 3.0, Date.now() - 5 * 60 * 1000);
+        service.addEdge('engaged', userIds[0], contentIds[1], 1.0);
+        service.addEdge('engaged', userIds[0], contentIds[0], 2.0);
+        service.addEdge('engaged', userIds[0], contentIds[2], 3.0, Date.now() - 5 * 60 * 1000);
 
-        const related = getRelated('engaged', userIds[0], { count: 3, period: 10 * 60 * 1000, timeDecay: 0.5 });
+        const related = service.getRelated('engaged', userIds[0], { count: 3, period: 10 * 60 * 1000, timeDecay: 0.5 });
 
         expect(related).toHaveLength(3);
         expect(related[0].id).toBe(contentIds[2]);

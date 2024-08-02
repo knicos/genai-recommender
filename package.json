@@ -3,6 +3,21 @@
     "private": true,
     "version": "0.0.0",
     "type": "module",
+    "main": "dist/main.js",
+    "types": "dist/main.d.ts",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": "./dist/main.js",
+        "./services/*": "./dist/services/*/index.js",
+        "./utils/*": "./dist/utils/*.js",
+        "./helpers/*": "./dist/helpers/*.js"
+    },
+    "repository": {
+        "url": "https://github.com/knicos/genai-recommender.git",
+        "type": "git"
+    },
     "scripts": {
         "dev": "vite",
         "build": "tsc && vite build",
@@ -21,6 +36,7 @@
         "@typescript-eslint/eslint-plugin": "^7.18.0",
         "@typescript-eslint/parser": "^7.18.0",
         "@vitest/coverage-v8": "^2.0.4",
+        "canvas": "^2.11.2",
         "eslint": "^8.56.0",
         "glob": "^11.0.0",
         "jsdom": "^24.1.1",
@@ -32,6 +48,7 @@
     "dependencies": {
         "eventemitter3": "^5.0.1",
         "jstat": "^1.9.6",
+        "jszip": "^3.10.1",
         "uuid": "^10.0.0"
     }
 }

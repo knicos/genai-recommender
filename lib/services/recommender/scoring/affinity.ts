@@ -1,8 +1,8 @@
 import { ContentNodeId, TopicNodeId, WeightedNode } from '@base/services/graph/graphTypes';
 import { ScoringOptions } from '../recommenderTypes';
-import { getRelated } from '@base/services/graph/query';
-import { UserNodeData } from '@base/services/users/userTypes';
-import { getTopicId } from '@base/services/concept/concept';
+import { UserNodeData } from '@base/services/profiler';
+import { getTopicId } from '@base/helpers/topics';
+import { GraphService } from '@base/services/graph';
 
 interface Preferences {
     viewing: WeightedNode<TopicNodeId>[];
@@ -12,7 +12,7 @@ interface Preferences {
     reacting: WeightedNode<TopicNodeId>[];
 }
 
-export function calculateAffinities(profile: UserNodeData): Preferences {
+export function calculateAffinities(graph: GraphService, profile: UserNodeData): Preferences {
     const seenTopicMap = new Map<string, number>();
     profile.affinities.topics.seenTopics.forEach((s) => {
         seenTopicMap.set(s.label, s.weight);
@@ -20,23 +20,23 @@ export function calculateAffinities(profile: UserNodeData): Preferences {
 
     return {
         viewing: profile.affinities.topics.viewedTopics.map((t) => ({
-            id: getTopicId(t.label),
+            id: getTopicId(graph, t.label),
             weight: t.weight / (seenTopicMap.get(t.label) || 1),
         })),
         commenting: profile.affinities.topics.commentedTopics.map((t) => ({
-            id: getTopicId(t.label),
+            id: getTopicId(graph, t.label),
             weight: t.weight / (seenTopicMap.get(t.label) || 1),
         })),
         sharing: profile.affinities.topics.sharedTopics.map((t) => ({
-            id: getTopicId(t.label),
+            id: getTopicId(graph, t.label),
             weight: t.weight / (seenTopicMap.get(t.label) || 1),
         })),
         following: profile.affinities.topics.followedTopics.map((t) => ({
-            id: getTopicId(t.label),
+            id: getTopicId(graph, t.label),
             weight: t.weight / (seenTopicMap.get(t.label) || 1),
         })),
         reacting: profile.affinities.topics.reactedTopics.map((t) => ({
-            id: getTopicId(t.label),
+            id: getTopicId(graph, t.label),
             weight: t.weight / (seenTopicMap.get(t.label) || 1),
         })),
     };
@@ -57,8 +57,13 @@ function sumTopicScores(topics: Map<TopicNodeId, number>, pref: WeightedNode<Top
     return count > 0 ? sum / count : 0;
 }
 
-export function calculateAffinityScores(preferences: Preferences, id: ContentNodeId, options?: ScoringOptions) {
-    const topicsArray = getRelated('topic', id, { count: 10 });
+export function calculateAffinityScores(
+    graph: GraphService,
+    preferences: Preferences,
+    id: ContentNodeId,
+    options?: ScoringOptions
+) {
+    const topicsArray = graph.getRelated('topic', id, { count: 10 });
     const topics = new Map<TopicNodeId, number>();
     topicsArray.forEach((t) => {
         topics.set(t.id, t.weight);

@@ -1,33 +1,34 @@
 import { NodeType, Edge, GNode, NodeID } from './graphTypes';
 
-export const nodeStore = new Map<string, GNode<NodeType>>();
-export const nodeTypeIndex = new Map<NodeType, GNode<NodeType>[]>();
+export default class GraphState {
+    public nodeStore = new Map<string, GNode<NodeType>>();
+    public nodeTypeIndex = new Map<NodeType, GNode<NodeType>[]>();
+    public edgeStore = new Map<string, Edge<NodeID<NodeType>, NodeID<NodeType>>>();
+    public edgeSrcIndex = new Map<string, Edge<NodeID<NodeType>, NodeID<NodeType>>[]>();
+    public edgeTypeSrcIndex = new Map<string, Edge<NodeID<NodeType>, NodeID<NodeType>>[]>();
 
-export const edgeStore = new Map<string, Edge<NodeID<NodeType>, NodeID<NodeType>>>();
-export const edgeSrcIndex = new Map<string, Edge<NodeID<NodeType>, NodeID<NodeType>>[]>();
-export const edgeTypeSrcIndex = new Map<string, Edge<NodeID<NodeType>, NodeID<NodeType>>[]>();
-
-export function resetGraph() {
-    nodeStore.clear();
-    nodeTypeIndex.clear();
-    edgeStore.clear();
-    edgeSrcIndex.clear();
-    edgeTypeSrcIndex.clear();
+    public reset() {
+        this.nodeStore.clear();
+        this.nodeTypeIndex.clear();
+        this.edgeStore.clear();
+        this.edgeSrcIndex.clear();
+        this.edgeTypeSrcIndex.clear();
+    }
 }
 
-export function dump() {
+export function dump(graph: GraphState) {
     return {
-        nodes: Array.from(nodeStore.values()),
-        edges: Array.from(edgeStore.values()),
+        nodes: Array.from(graph.nodeStore.values()),
+        edges: Array.from(graph.edgeStore.values()),
     };
 }
 
-export function dumpNodes() {
-    return Array.from(nodeStore.values());
+export function dumpNodes(graph: GraphState) {
+    return Array.from(graph.nodeStore.values());
 }
 
-export function dumpJSON() {
-    return JSON.stringify(dump(), undefined, 4);
+export function dumpJSON(graph: GraphState) {
+    return JSON.stringify(dump(graph), undefined, 4);
 }
 
 export type GraphExport = ReturnType<typeof dump>;

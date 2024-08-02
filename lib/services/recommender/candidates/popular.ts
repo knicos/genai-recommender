@@ -1,17 +1,22 @@
-import { getNodesByType } from '@base/services/graph/nodes';
 import { betaProbability, biasedUniqueSubset } from '@base/utils/subsets';
 import { Recommendation } from '../recommenderTypes';
 import { ContentNodeId, WeightedNode } from '@base/services/graph/graphTypes';
-import { getContentStats, getMaxContentEngagement } from '@base/services/content/content';
+import { GraphService } from '@base/services/graph';
+import { ContentService } from '@base/services/content';
 
-export function getPopularCandidates(nodes: Recommendation[], count: number) {
-    const allNodes = getNodesByType('content');
+export function getPopularCandidates(
+    graph: GraphService,
+    content: ContentService,
+    nodes: Recommendation[],
+    count: number
+) {
+    const allNodes = graph.getNodesByType('content');
     if (allNodes.length === 0) return;
 
-    const maxEngagement = getMaxContentEngagement() || 1;
+    const maxEngagement = content.getMaxContentEngagement() || 1;
     const popular: WeightedNode<ContentNodeId>[] = allNodes.map((n) => ({
         id: n,
-        weight: getContentStats(n).engagement / maxEngagement,
+        weight: content.getContentStats(n).engagement / maxEngagement,
     }));
     popular.sort((a, b) => b.weight - a.weight);
 
@@ -27,14 +32,14 @@ export function getPopularCandidates(nodes: Recommendation[], count: number) {
     });
 }
 
-export function popularProbability(id: ContentNodeId, count: number) {
-    const allNodes = getNodesByType('content');
+export function popularProbability(graph: GraphService, content: ContentService, id: ContentNodeId, count: number) {
+    const allNodes = graph.getNodesByType('content');
     if (allNodes.length === 0) return 0;
 
-    const maxEngagement = getMaxContentEngagement() || 1;
+    const maxEngagement = content.getMaxContentEngagement() || 1;
     const popular: WeightedNode<ContentNodeId>[] = allNodes.map((n) => ({
         id: n,
-        weight: getContentStats(n).engagement / maxEngagement,
+        weight: content.getContentStats(n).engagement / maxEngagement,
     }));
     popular.sort((a, b) => b.weight - a.weight);
 

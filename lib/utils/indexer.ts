@@ -1,5 +1,5 @@
+import { NodeID, WeightedNode } from '@base/services/graph';
 import { Embedding, normCosinesim } from '@base/utils/embedding';
-import { NodeID, WeightedNode } from '../graph/graphTypes';
 
 /*interface IndexNode {
     embedding?: Embedding;

@@ -1,8 +1,10 @@
 import { makeFeatures } from './features';
 import { Recommendation, ScoredRecommendation, Scores, ScoringOptions } from './recommenderTypes';
 import { UserNodeId } from '../graph/graphTypes';
-import { UserNodeData } from '../users/userTypes';
 import { beta } from 'jstat';
+import { UserNodeData } from '../profiler';
+import { GraphService } from '../graph';
+import { ContentService } from '../content';
 
 function normalise(v: number[]) {
     const sum = v.reduce((s, i) => s + i, 0);
@@ -52,13 +54,15 @@ function optionsWeights(options?: ScoringOptions) {
 }
 
 function calculateScores(
+    graph: GraphService,
+    content: ContentService,
     userId: UserNodeId,
     candidates: Recommendation[],
     profile: UserNodeData,
     options?: ScoringOptions
 ) {
     // Could use Tensorflow here?
-    const features = makeFeatures(userId, candidates, profile, options);
+    const features = makeFeatures(graph, content, userId, candidates, profile, options);
     const keys = (features.length > 0 ? Object.keys(features[0]) : []) as (keyof Scores)[];
     const featureVectors = features.map((i) => Object.values(i));
     const enabledWeights = optionsWeights(options);
@@ -86,12 +90,14 @@ function calculateScores(
 }
 
 export function scoreCandidates(
+    graph: GraphService,
+    content: ContentService,
     userId: UserNodeId,
     candidates: Recommendation[],
     profile: UserNodeData,
     options?: ScoringOptions
 ): ScoredRecommendation[] {
-    const results = calculateScores(userId, candidates, profile, options);
+    const results = calculateScores(graph, content, userId, candidates, profile, options);
 
     results.sort((a, b) => b.score - a.score);
     results.forEach((r, ix) => {
@@ -109,13 +115,15 @@ const ALPHA = 0.5;
 const BETA = 1;
 
 export function scoringProbability(
+    graph: GraphService,
+    content: ContentService,
     userId: UserNodeId,
     candidates: Recommendation[],
     profile: UserNodeData,
     count: number,
     options?: ScoringOptions
 ): ScoredRecommendation[] {
-    const results = calculateScores(userId, candidates, profile, options);
+    const results = calculateScores(graph, content, userId, candidates, profile, options);
 
     results.sort((a, b) => b.score - a.score);
     const totalScores = results.reduce((s, v) => s + v.score, 0);

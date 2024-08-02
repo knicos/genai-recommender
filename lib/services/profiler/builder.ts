@@ -1,35 +1,36 @@
-import { getSimilarContent } from '../content/content';
 import { UserNodeId } from '../graph/graphTypes';
-import { Affinities, UserNodeData } from '../users/userTypes';
-import { getUserData } from '../users/users';
 import { getContentAffinities, getTopicAffinities, getUserAffinities } from './affinities';
-import { getCurrentUser } from './state';
 import { generateEmbedding } from './userEmbedding';
+import { Affinities, UserNodeData } from './profilerTypes';
+import { GraphService } from '../graph';
+import { ContentService } from '../content';
 
 const PROFILE_COUNTS = 10;
 
 /** When a profile is flagged as out-of-date, rebuild the summary and embeddings. */
-export function buildUserProfile(id?: UserNodeId): UserNodeData {
-    const aid = id || getCurrentUser();
+export function buildUserProfile(
+    graph: GraphService,
+    content: ContentService,
+    id: UserNodeId,
+    data?: UserNodeData
+): UserNodeData {
+    const aid = id;
     const affinities: Affinities = {
-        topics: getTopicAffinities(aid, PROFILE_COUNTS),
-        contents: getContentAffinities(aid, PROFILE_COUNTS),
+        topics: getTopicAffinities(graph, aid, PROFILE_COUNTS),
+        contents: getContentAffinities(graph, aid, PROFILE_COUNTS),
         users: getUserAffinities(),
     };
 
     // const seenItems = getRelated('seen', aid, { period: TIME_WINDOW });
 
     // Update the embedding
-    const embedding = generateEmbedding(aid);
+    const embedding = generateEmbedding(graph, content, aid);
 
-    const image = getSimilarContent(
+    const image = content.getSimilarContent(
         embedding,
         1,
         affinities.contents.contents.map((e) => e.id)
     )[0]?.id;
-
-    // Attempt to find data
-    const data = getUserData(aid);
 
     if (!data) {
         console.error('No data for', aid);

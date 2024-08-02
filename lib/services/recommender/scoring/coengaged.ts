@@ -1,17 +1,16 @@
-import { getEdgeWeights } from '@base/services/graph/edges';
+import { GraphService } from '@base/services/graph';
 import { ContentNodeId, UserNodeId } from '@base/services/graph/graphTypes';
-import { getRelated } from '@base/services/graph/query';
 
 const COENGAGEMENT_MAX = 4;
 
-export function calculateCoengagementScore(userId: UserNodeId, contentId: ContentNodeId) {
+export function calculateCoengagementScore(graph: GraphService, userId: UserNodeId, contentId: ContentNodeId) {
     // Get all coengagements for content
-    const coengagements = getRelated('coengaged', contentId, { count: 30 });
+    const coengagements = graph.getRelated('coengaged', contentId, { count: 30 });
 
     // Check if the user has engaged with it
     let sum = 0;
     coengagements.forEach((e) => {
-        const engaged = getEdgeWeights('engaged', userId, e.id)[0] || 0;
+        const engaged = graph.getEdgeWeights('engaged', userId, e.id)[0] || 0;
         sum += engaged;
     });
 

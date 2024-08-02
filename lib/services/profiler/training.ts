@@ -1,7 +1,5 @@
-import { UserNodeId } from '../graph/graphTypes';
 import { ScoredRecommendation, Scores } from '../recommender/recommenderTypes';
 import { InternalUserProfile } from './profilerTypes';
-import { internalProfiles } from './state';
 
 const MAX_LEARNING_RATE = 0.3;
 const MIN_LEARNING_RATE = 0;
@@ -37,8 +35,7 @@ export function trainProfile(input: ScoredRecommendation, profile: InternalUserP
     });
 }
 
-export function trainProfileById(id: UserNodeId, input: ScoredRecommendation, score: number) {
-    const profile = internalProfiles.get(id);
+export function trainProfileById(profile: InternalUserProfile, input: ScoredRecommendation, score: number) {
     if (profile) {
         trainProfile(input, profile, score);
     }

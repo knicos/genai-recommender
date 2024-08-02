@@ -1,7 +1,6 @@
-import { getEdgesOfType } from './edges';
 import { DestinationFor, Edge, EdgeType, NodeID, SourceFor, WeightedNode } from './graphTypes';
 
-interface QueryOptions<A extends NodeID, B extends NodeID> {
+export interface QueryOptions<A extends NodeID, B extends NodeID> {
     count?: number;
     period?: number;
     strictPeriod?: number;
@@ -11,8 +10,7 @@ interface QueryOptions<A extends NodeID, B extends NodeID> {
 }
 
 export function getRelated<T extends EdgeType, N extends SourceFor<T>, R extends DestinationFor<T, N>>(
-    type: T,
-    node: N | N[],
+    edges: Edge<N, R>[],
     options?: QueryOptions<N, R>
 ): WeightedNode<R>[] {
     const period = options?.period;
@@ -20,8 +18,6 @@ export function getRelated<T extends EdgeType, N extends SourceFor<T>, R extends
     const startTime = options?.startTimeOffset || 0;
     const count = options?.count;
     const timeDecay = options?.timeDecay;
-
-    const edges = getEdgesOfType<T, N, Edge<N, R>>(type, node);
 
     const now = Date.now();
     const firstTime =

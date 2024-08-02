@@ -1,11 +1,11 @@
 import { Recommendation } from '../recommenderTypes';
 import { calculateCount } from './common';
-import { getRelated } from '@base/services/graph/query';
 import { betaProbability, biasedUniqueSubset } from '@base/utils/subsets';
-import { UserNodeData } from '@base/services/users/userTypes';
 import { ContentNodeId } from '@base/services/graph/graphTypes';
+import { GraphService } from '@base/services/graph';
+import { UserNodeData } from '@base/services/profiler/profilerTypes';
 
-export function generateCoengaged(profile: UserNodeData, nodes: Recommendation[], count: number) {
+export function generateCoengaged(graph: GraphService, profile: UserNodeData, nodes: Recommendation[], count: number) {
     const engaged = profile.affinities.contents.contents;
     const high = engaged[0]?.weight || 0;
     const low = engaged[engaged.length - 1]?.weight || 0;
@@ -13,7 +13,7 @@ export function generateCoengaged(profile: UserNodeData, nodes: Recommendation[]
     engaged.forEach((e) => {
         const c = calculateCount(high, low, e.weight, count);
         // TODO: Consider using a popularity weighted edge here.
-        const related = getRelated('coengaged', e.id);
+        const related = graph.getRelated('coengaged', e.id);
         const result = biasedUniqueSubset(related, c, (v) => v.id);
         result.forEach((tr) =>
             nodes.push({
@@ -28,7 +28,12 @@ export function generateCoengaged(profile: UserNodeData, nodes: Recommendation[]
     });
 }
 
-export function coengagedProbability(profile: UserNodeData, count: number, id: ContentNodeId): number {
+export function coengagedProbability(
+    graph: GraphService,
+    profile: UserNodeData,
+    count: number,
+    id: ContentNodeId
+): number {
     const engaged = profile.affinities.contents.contents;
     //const high = engaged[0]?.weight || 0;
     //const low = engaged[engaged.length - 1]?.weight || 0;
@@ -38,7 +43,7 @@ export function coengagedProbability(profile: UserNodeData, count: number, id: C
     engaged.forEach((e) => {
         //const c = calculateCount(high, low, e.weight, count);
         // TODO: Consider using a popularity weighted edge here.
-        const related = getRelated('coengaged', e.id);
+        const related = graph.getRelated('coengaged', e.id);
         const ix = related.findIndex((v) => v.id === id);
         const p = ix >= 0 ? 1 - Math.pow(1 - betaProbability(ix, related.length), count) : 0;
         sumP = sumP + p - sumP * p;

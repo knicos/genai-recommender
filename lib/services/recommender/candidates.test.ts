@@ -1,17 +1,13 @@
 import { beforeEach, describe, it } from 'vitest';
-import { resetGraph } from '../graph/state';
 import { candidateProbabilities, generateCandidates } from './candidates';
-import { createEmptyProfile, createUserProfile, touchProfile } from '../profiler/profiler';
-import { addNode } from '../graph/nodes';
-import { addEdge } from '../graph/edges';
-import { addTopic } from '../concept/concept';
 import { CandidateOptions } from './recommenderTypes';
 import { normalise } from '@base/utils/embedding';
-import { addContentEngagement } from '../content/content';
-
-beforeEach(() => {
-    resetGraph();
-});
+import { ProfilerService } from '../profiler';
+import { ContentService } from '../content';
+import { GraphService } from '../graph';
+import ServiceBroker from '../broker';
+import { addTopic } from '@base/helpers/topics';
+import { createEmptyProfile } from '../profiler/empty';
 
 const DEFAULT_OPTIONS: CandidateOptions = {
     random: 2,
@@ -22,26 +18,44 @@ const DEFAULT_OPTIONS: CandidateOptions = {
 };
 
 describe('Candidates.generateCandidates()', () => {
+    let broker = new ServiceBroker();
+    let graph = new GraphService(broker);
+    let content = new ContentService(broker, graph);
+    let profiler = new ProfilerService(broker, graph, content);
+
+    beforeEach(() => {
+        broker = new ServiceBroker();
+        graph = new GraphService(broker);
+        content = new ContentService(broker, graph);
+        profiler = new ProfilerService(broker, graph, content);
+    });
+
     it('returns no candidates if there is no data', async ({ expect }) => {
-        const profile = createUserProfile('user:xyz', 'TestUser');
-        const candidates = generateCandidates(profile, 10, DEFAULT_OPTIONS);
+        const profile = profiler.createUserProfile('user:xyz', 'TestUser');
+        const candidates = generateCandidates(graph, content, profiler, profile, 10, DEFAULT_OPTIONS);
         expect(candidates).toHaveLength(0);
     });
 
     it('returns a random candidate if no other candidates', async ({ expect }) => {
-        addNode('content', 'content:ggg');
-        const profile = createUserProfile('user:xyz', 'TestUser');
-        const candidates = generateCandidates(profile, 10, { ...DEFAULT_OPTIONS, popular: 0 });
+        content.addContent('', { id: 'ggg', labels: [] });
+        const profile = profiler.createUserProfile('user:xyz', 'TestUser');
+        const candidates = generateCandidates(graph, content, profiler, profile, 10, {
+            ...DEFAULT_OPTIONS,
+            popular: 0,
+        });
         expect(candidates).toHaveLength(1);
         expect(candidates[0].candidateOrigin).toBe('random');
         expect(candidates[0].contentId).toBe('content:ggg');
     });
 
     it('returns popular candidates', async ({ expect }) => {
-        addNode('content', 'content:ggg');
-        addContentEngagement('content:ggg', 2);
-        const profile = createUserProfile('user:xyz', 'TestUser');
-        const candidates = generateCandidates(profile, 10, { ...DEFAULT_OPTIONS, random: 0 });
+        content.addContent('', { id: 'ggg', labels: [] });
+        content.addContentEngagement('content:ggg', 2);
+        const profile = profiler.createUserProfile('user:xyz', 'TestUser');
+        const candidates = generateCandidates(graph, content, profiler, profile, 10, {
+            ...DEFAULT_OPTIONS,
+            random: 0,
+        });
         expect(candidates).toHaveLength(1);
         expect(candidates[0].candidateOrigin).toBe('popular');
         expect(candidates[0].contentId).toBe('content:ggg');
@@ -49,12 +63,16 @@ describe('Candidates.generateCandidates()', () => {
     });
 
     it('generates taste candidates', async ({ expect }) => {
-        addNode('content', 'content:ggg');
-        const topicID = addTopic('topic1', 1.0);
-        addEdge('content', topicID, 'content:ggg', 1.0);
-        const profile = createUserProfile('user:xyz', 'TestUser');
+        content.addContent('', { id: 'ggg', labels: [] });
+        const topicID = addTopic(graph, 'topic1');
+        graph.addEdge('content', topicID, 'content:ggg', 1.0);
+        const profile = profiler.createUserProfile('user:xyz', 'TestUser');
         profile.affinities.topics.topics = [{ label: 'topic1', weight: 0.5 }];
-        const candidates = generateCandidates(profile, 10, { ...DEFAULT_OPTIONS, random: 0, popular: 0 });
+        const candidates = generateCandidates(graph, content, profiler, profile, 10, {
+            ...DEFAULT_OPTIONS,
+            random: 0,
+            popular: 0,
+        });
 
         expect(candidates).toHaveLength(1);
         expect(candidates[0].candidateOrigin).toBe('topic_affinity');
@@ -63,15 +81,19 @@ describe('Candidates.generateCandidates()', () => {
     });
 
     it('generates similar user candidates', async ({ expect }) => {
-        addNode('content', 'content:ggg');
-        const profile1 = createUserProfile('user:xyz', 'TestUser');
-        const profile2 = createUserProfile('user:test1', 'TestUser2');
+        content.addContent('', { id: 'ggg', labels: [] });
+        const profile1 = profiler.createUserProfile('user:xyz', 'TestUser');
+        const profile2 = profiler.createUserProfile('user:test1', 'TestUser2');
         profile1.embeddings.taste = normalise([1, 2, 3]);
         profile2.embeddings.taste = normalise([1, 2, 3]);
         profile2.affinities.contents.contents = [{ id: 'content:ggg', weight: 1 }];
-        touchProfile(profile1.id);
-        touchProfile(profile2.id);
-        const candidates = generateCandidates(profile1, 10, { ...DEFAULT_OPTIONS, random: 0, popular: 0 });
+        profiler.indexUser(profile1.id);
+        profiler.indexUser(profile2.id);
+        const candidates = generateCandidates(graph, content, profiler, profile1, 10, {
+            ...DEFAULT_OPTIONS,
+            random: 0,
+            popular: 0,
+        });
 
         expect(candidates).toHaveLength(1);
         expect(candidates[0].candidateOrigin).toBe('similar_user');
@@ -80,10 +102,25 @@ describe('Candidates.generateCandidates()', () => {
 });
 
 describe('Candidates.candidateProbabilities()', () => {
+    let broker = new ServiceBroker();
+    let graph = new GraphService(broker);
+    let content = new ContentService(broker, graph);
+    let profiler = new ProfilerService(broker, graph, content);
+
+    beforeEach(() => {
+        broker = new ServiceBroker();
+        graph = new GraphService(broker);
+        content = new ContentService(broker, graph);
+        profiler = new ProfilerService(broker, graph, content);
+    });
+
     it('calculates a probability for popular candidates', async ({ expect }) => {
-        addNode('content', 'content:1');
-        addContentEngagement('content:1', 0.5);
+        content.addContent('', { id: '1', labels: [] });
+        content.addContentEngagement('content:1', 0.5);
         const p = candidateProbabilities(
+            graph,
+            content,
+            profiler,
             createEmptyProfile('user:1', 'Test'),
             5,
             { popular: 2, taste: 0, coengaged: 0, similarUsers: 0, random: 0 },
@@ -94,13 +131,16 @@ describe('Candidates.candidateProbabilities()', () => {
     });
 
     it('calculates a probability for taste candidates', async ({ expect }) => {
-        addNode('content', 'content:ggg');
-        const topicID = addTopic('topic1', 1.0);
-        addEdge('content', topicID, 'content:ggg', 1.0);
-        addEdge('topic', 'content:ggg', topicID, 1.0);
-        const profile = createUserProfile('user:xyz', 'TestUser');
+        content.addContent('', { id: 'ggg', labels: [] });
+        const topicID = addTopic(graph, 'topic1');
+        graph.addEdge('content', topicID, 'content:ggg', 1.0);
+        graph.addEdge('topic', 'content:ggg', topicID, 1.0);
+        const profile = profiler.createUserProfile('user:xyz', 'TestUser');
         profile.affinities.topics.topics = [{ label: 'topic1', weight: 0.5 }];
         const p = candidateProbabilities(
+            graph,
+            content,
+            profiler,
             profile,
             5,
             { popular: 0, taste: 2, coengaged: 0, similarUsers: 0, random: 0 },
@@ -111,15 +151,18 @@ describe('Candidates.candidateProbabilities()', () => {
     });
 
     it('calculates a probability for similar user candidates', async ({ expect }) => {
-        addNode('content', 'content:ggg');
-        const profile1 = createUserProfile('user:xyz', 'TestUser');
-        const profile2 = createUserProfile('user:test1', 'TestUser2');
+        content.addContent('', { id: 'ggg', labels: [] });
+        const profile1 = profiler.createUserProfile('user:xyz', 'TestUser');
+        const profile2 = profiler.createUserProfile('user:test1', 'TestUser2');
         profile1.embeddings.taste = normalise([1, 2, 3]);
         profile2.embeddings.taste = normalise([1, 2, 3]);
         profile2.affinities.contents.contents = [{ id: 'content:ggg', weight: 1 }];
-        touchProfile(profile1.id);
-        touchProfile(profile2.id);
+        profiler.indexUser(profile1.id);
+        profiler.indexUser(profile2.id);
         const p = candidateProbabilities(
+            graph,
+            content,
+            profiler,
             profile1,
             5,
             { popular: 0, taste: 0, coengaged: 0, similarUsers: 2, random: 0 },
@@ -130,16 +173,19 @@ describe('Candidates.candidateProbabilities()', () => {
     });
 
     it('zero probability if not matched', async ({ expect }) => {
-        addNode('content', 'content:ggg');
-        addNode('content', 'content:xxx');
-        const profile1 = createUserProfile('user:xyz', 'TestUser');
-        const profile2 = createUserProfile('user:test1', 'TestUser2');
+        content.addContent('', { id: 'ggg', labels: [] });
+        content.addContent('', { id: 'xxx', labels: [] });
+        const profile1 = profiler.createUserProfile('user:xyz', 'TestUser');
+        const profile2 = profiler.createUserProfile('user:test1', 'TestUser2');
         profile1.embeddings.taste = normalise([1, 2, 3]);
         profile2.embeddings.taste = normalise([1, 2, 3]);
         profile2.affinities.contents.contents = [{ id: 'content:ggg', weight: 1 }];
-        touchProfile(profile1.id);
-        touchProfile(profile2.id);
+        profiler.indexUser(profile1.id);
+        profiler.indexUser(profile2.id);
         const p = candidateProbabilities(
+            graph,
+            content,
+            profiler,
             profile1,
             5,
             { popular: 0, taste: 0, coengaged: 0, similarUsers: 2, random: 0 },
