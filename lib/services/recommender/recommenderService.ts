@@ -1,11 +1,17 @@
 import { biasedUniqueSubset } from '@base/utils/subsets';
 import ServiceBroker from '../broker';
 import { ContentService } from '../content';
-import { GraphService, UserNodeId } from '../graph';
-import { ProfilerService } from '../profiler';
-import { generateCandidates } from './candidates';
-import { RecommendationOptions, ScoredRecommendation } from './recommenderTypes';
-import { scoreCandidates } from './scoring';
+import { ContentNodeId, GraphService, UserNodeId } from '../graph';
+import { ProfilerService, UserNodeData } from '../profiler';
+import { candidateProbabilities, generateCandidates } from './candidates';
+import {
+    CandidateOptions,
+    Recommendation,
+    RecommendationOptions,
+    ScoredRecommendation,
+    ScoringOptions,
+} from './recommenderTypes';
+import { scoreCandidates, scoringProbability } from './scoring';
 
 const CANDIDATE_FACTOR = 10;
 
@@ -76,5 +82,19 @@ export default class RecommenderService {
 
     public removeRecommendations(id: UserNodeId) {
         this.store.delete(id);
+    }
+
+    public getCandidateProbability(profile: UserNodeData, count: number, options: CandidateOptions, id: ContentNodeId) {
+        return candidateProbabilities(this.graph, this.content, this.profiler, profile, count, options, id);
+    }
+
+    public getScoringProbabilities(
+        userId: UserNodeId,
+        candidates: Recommendation[],
+        profile: UserNodeData,
+        count: number,
+        options?: ScoringOptions
+    ): ScoredRecommendation[] {
+        return scoringProbability(this.graph, this.content, userId, candidates, profile, count, options);
     }
 }
