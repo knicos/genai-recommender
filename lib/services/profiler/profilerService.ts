@@ -8,8 +8,19 @@ import { createEmptyProfile } from './empty';
 import { ContentService } from '../content';
 import EmbeddingIndex from '@base/utils/indexer';
 import { Embedding } from '@base/utils/embedding';
+import { v4 as uuidv4 } from 'uuid';
 
 const USER_KEY = 'genai_somekone_userID';
+
+let userID: UserNodeId;
+
+export function getCurrentUser(): UserNodeId {
+    if (!userID) {
+        userID = `user:${uuidv4()}`;
+        window.sessionStorage.setItem(USER_KEY, userID);
+    }
+    return userID;
+}
 
 interface GlobalProfileStats {
     engagement: number;
@@ -25,9 +36,9 @@ type TopicEdgeTypes =
     | 'engaged_topic';
 
 export default class ProfilerService {
-    private broker: ServiceBroker;
-    private graph: GraphService;
-    private content: ContentService;
+    public readonly broker: ServiceBroker;
+    public readonly graph: GraphService;
+    public readonly content: ContentService;
     private userID?: UserNodeId;
     private internalProfiles = new Map<UserNodeId, InternalUserProfile>();
     private outOfDate = new Set<UserNodeId>();
@@ -45,6 +56,8 @@ export default class ProfilerService {
         if (sessionUserID && isUserID(sessionUserID)) {
             this.userID = sessionUserID;
             this.graph.addNode('user', this.userID);
+        } else {
+            this.getCurrentUser();
         }
 
         this.broker.on('nodetype-user', (id) => this.processUserNodeChange(id as UserNodeId));
@@ -214,6 +227,7 @@ export default class ProfilerService {
         if (!this.userID) {
             this.userID = this.graph.addNode('user');
             window.sessionStorage.setItem(USER_KEY, this.userID);
+            userID = this.userID;
         }
         return this.userID;
     }

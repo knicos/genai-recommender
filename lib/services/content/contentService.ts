@@ -23,8 +23,8 @@ function createEmptyStats() {
 }
 
 export default class ContentService {
-    public graph: GraphService;
-    private broker: ServiceBroker;
+    public readonly graph: GraphService;
+    public readonly broker: ServiceBroker;
     private state = new ContentState();
     private topEngagement = 0;
     private mobilenet?: MobileNetEmbedding;
@@ -301,6 +301,10 @@ export default class ContentService {
         }
     }
 
+    public getContentEngagement(id: ContentNodeId) {
+        return this.getContentStats(id)?.engagement || 0;
+    }
+
     public getAllContent() {
         return this.graph.getNodesByType('content');
     }
@@ -319,5 +323,17 @@ export default class ContentService {
 
         sims.sort((a, b) => b.weight - a.weight);
         return count ? sims.slice(0, count) : sims;
+    }
+
+    public getEngagedUsers(id: ContentNodeId, count?: number) {
+        return this.graph.getRelated(
+            'engaged',
+            id,
+            count ? { count, timeDecay: 0.1, period: 60 * 60 * 1000 } : undefined
+        );
+    }
+
+    public getCoengagedContent(id: ContentNodeId, count?: number) {
+        return this.graph.getRelated('coengaged', id, count ? { count } : undefined);
     }
 }

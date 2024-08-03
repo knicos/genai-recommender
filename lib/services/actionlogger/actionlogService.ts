@@ -32,7 +32,7 @@ function normDwell(d: number): number {
 }
 
 export default class ActionLogService {
-    private broker: ServiceBroker;
+    public readonly broker: ServiceBroker;
     private state = new ActionLogState();
 
     constructor(broker: ServiceBroker) {

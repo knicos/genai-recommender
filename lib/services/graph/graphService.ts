@@ -7,7 +7,7 @@ import ServiceBroker from '../broker';
 
 export default class GraphService {
     private state = new GraphState();
-    private broker: ServiceBroker;
+    public readonly broker: ServiceBroker;
 
     constructor(broker: ServiceBroker) {
         this.broker = broker;

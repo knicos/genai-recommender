@@ -10,10 +10,10 @@ import { scoreCandidates } from './scoring';
 const CANDIDATE_FACTOR = 10;
 
 export default class RecommenderService {
-    private broker: ServiceBroker;
-    private graph: GraphService;
-    private content: ContentService;
-    private profiler: ProfilerService;
+    public readonly broker: ServiceBroker;
+    public readonly graph: GraphService;
+    public readonly content: ContentService;
+    public readonly profiler: ProfilerService;
     private store = new Map<UserNodeId, ScoredRecommendation[]>();
 
     constructor(broker: ServiceBroker, graph: GraphService, content: ContentService, profiler: ProfilerService) {

@@ -1,6 +1,6 @@
 export * from './services/actionlogger';
 export * from './services/graph';
-export * from './services/broker';
+export { default as ServiceBroker, getBroker } from './services/broker';
 export * from './services/events';
 export * from './services/content';
 export * from './services/profiler';
@@ -8,4 +8,6 @@ export * from './services/recommender';
 export { default as clusterUser } from './helpers/clusterUsers';
 export * from './helpers/topics';
 export * from './helpers/similarUsers';
+export * from './helpers/userSnapshot';
 export * from './utils/embedding';
+export * from './utils/subsets';
