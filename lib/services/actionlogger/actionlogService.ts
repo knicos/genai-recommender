@@ -54,12 +54,14 @@ export default class ActionLogService {
         const value = normDwell(dwell) * ACTIVITY_VALUES.dwell;
         this.increaseContentEngagement(uid, cid, value);
         this.broker.emit('activity', 'dwell', uid, cid, value, timestamp);
+        this.broker.emit('activity-dwell', uid, cid, value, timestamp);
     }
 
     private commentActivity(uid: UserNodeId, cid: ContentNodeId, score: number, timestamp: number) {
         const value = Math.min(1, score / MAX_COMMENT_LENGTH) * ACTIVITY_VALUES.comment;
         this.increaseContentEngagement(uid, cid, value);
         this.broker.emit('activity', 'comment', uid, cid, value, timestamp);
+        this.broker.emit('activity-comment', uid, cid, value, timestamp);
     }
 
     public createEngagementEntry(uid: UserNodeId, cid: ContentNodeId) {
@@ -73,7 +75,7 @@ export default class ActionLogService {
                 value: v,
                 timestamp: Date.now(),
             },
-            id
+            uid
         );
     }
 
@@ -90,10 +92,12 @@ export default class ActionLogService {
                 break;
             case 'engagement':
                 this.broker.emit('activity', 'engagement', aid, cid, data.value || 0, data.timestamp);
+                this.broker.emit('activity-engagement', aid, cid, data.value || 0, data.timestamp);
                 break;
             default:
                 this.increaseContentEngagement(aid, cid, ACTIVITY_VALUES[data.activity]);
                 this.broker.emit('activity', data.activity, aid, cid, ACTIVITY_VALUES[data.activity], data.timestamp);
+                this.broker.emit(`activity-${data.activity}`, aid, cid, ACTIVITY_VALUES[data.activity], data.timestamp);
                 break;
         }
 

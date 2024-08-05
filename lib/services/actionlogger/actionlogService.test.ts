@@ -48,6 +48,36 @@ describe('ActionLogService', () => {
         });
     });
 
+    describe('createEngagementEntry()', () => {
+        it('triggers an activity event', async ({ expect }) => {
+            const broker = new ServiceBroker();
+            const service = new ActionLogService(broker);
+
+            const eventFn = vi.fn();
+            broker.on('activity-engagement', eventFn);
+            service.addLogEntry(
+                {
+                    activity: 'seen',
+                    id: 'content:1',
+                    timestamp: 100,
+                },
+                'user:xyz'
+            );
+            service.addLogEntry(
+                {
+                    activity: 'dwell',
+                    id: 'content:1',
+                    value: 8000,
+                    timestamp: 100,
+                },
+                'user:xyz'
+            );
+            service.createEngagementEntry('user:xyz', 'content:1');
+
+            expect(eventFn).toHaveBeenCalledWith('user:xyz', 'content:1', expect.any(Number), expect.any(Number));
+        });
+    });
+
     describe('Action Logs.getActionLogSince', () => {
         it('only returns new items', async ({ expect }) => {
             const broker = new ServiceBroker();

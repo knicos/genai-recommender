@@ -65,4 +65,15 @@ describe('ProfilerService', () => {
             expect(similar).toHaveLength(2);
         });
     });
+
+    describe('Engagement activity', () => {
+        it('adds engagement edges upon engagement event', async ({ expect }) => {
+            content.addContent('data', { id: 'zzz', labels: [] });
+            service.createUserProfile('user:xyz', 'TestUser5');
+
+            broker.emit('activity-engagement', 'user:xyz', 'content:zzz', 1, 100);
+            expect(graph.getEdge('engaged', 'user:xyz', 'content:zzz')?.weight).toBe(1);
+            expect(graph.getEdge('engaged', 'content:zzz', 'user:xyz')?.weight).toBe(1);
+        });
+    });
 });
