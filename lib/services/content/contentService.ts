@@ -16,6 +16,12 @@ export interface CommentDataItem {
 
 export interface EncoderOptions {
     epochs?: number;
+    dims?: number;
+    layers?: number[];
+    onEpoch?: (epoch: number, loss: number, validationLoss: number) => void;
+    onTrained?: () => void;
+    onMobileNetDone?: () => void;
+    noSave?: boolean;
 }
 
 function createEmptyStats() {
@@ -108,7 +114,7 @@ export default class ContentService {
         const epochs = opts?.epochs || 200;
 
         this.encoder = new AutoEncoder();
-        this.encoder.create(20, 1280, []);
+        this.encoder.create(opts?.dims || 20, 1280, opts?.layers || []);
 
         if (!this.mobilenet) {
             this.mobilenet = new MobileNetEmbedding();
@@ -116,7 +122,17 @@ export default class ContentService {
 
         const images = Array.from(this.state.dataStore.values());
         const raw = await this.mobilenet.generateEmbeddings(images);
-        await this.encoder.train(raw, epochs);
+        if (opts?.onMobileNetDone) {
+            opts.onMobileNetDone();
+        }
+        await this.encoder.train(raw, epochs, (e, logs) => {
+            if (opts?.onEpoch) {
+                opts.onEpoch(e, logs?.loss || 0, logs?.val_loss || 0);
+            }
+        });
+        if (opts?.onTrained) {
+            opts.onTrained();
+        }
 
         // Replace all existing content embeddings
         const reduced = this.encoder.generate(raw);
@@ -129,7 +145,7 @@ export default class ContentService {
             ++i;
         });
 
-        return this.encoder.save();
+        return !opts?.noSave ? this.encoder.save() : undefined;
     }
 
     public getContentData(id: ContentNodeId) {
