@@ -77,7 +77,7 @@ export default class ActionLogService {
         );
     }
 
-    private processLogEntry(data: LogEntry, id: UserNodeId, noEvent?: boolean) {
+    public processLogEntry(data: LogEntry, id: UserNodeId, noEvent?: boolean) {
         const aid = id;
         const cid = (data.id || '') as ContentNodeId;
 

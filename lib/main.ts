@@ -5,6 +5,7 @@ export * from './services/events';
 export * from './services/content';
 export * from './services/profiler';
 export * from './services/recommender';
+export * from './services/replay';
 export { default as clusterUser } from './helpers/clusterUsers';
 export * from './helpers/topics';
 export * from './helpers/similarUsers';
