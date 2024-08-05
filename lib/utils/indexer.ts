@@ -37,7 +37,7 @@ export default class EmbeddingIndex<T extends NodeID = NodeID> {
         if (options.count) {
             return es.slice(0, options.count);
         } else if (options.maxDistance) {
-            return es.filter((e) => e.weight <= (options.maxDistance || 0));
+            return es.filter((e) => e.weight <= (options.maxDistance || 1));
         }
         return es;
     }

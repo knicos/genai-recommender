@@ -4,6 +4,7 @@ import { GraphService } from '../graph';
 import { ContentService } from '../content';
 import ProfilerService from './profilerService';
 import { createEmptyProfile } from './empty';
+import { normalise } from '@base/main';
 
 describe('ProfilerService', () => {
     let broker = new ServiceBroker();
@@ -48,6 +49,20 @@ describe('ProfilerService', () => {
             service.reverseProfile('user:xyz', testProfile);
 
             expect(handler).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('add from node', () => {
+        it('correctly indexes when adding nodes', async ({ expect }) => {
+            const profile1 = createEmptyProfile('user:xyz', 'Test1');
+            const profile2 = createEmptyProfile('user:zzz', 'Test2');
+            profile1.embeddings.taste = normalise([1, 2, 3]);
+            profile2.embeddings.taste = normalise([1, 2, 4]);
+            graph.addNode('user', 'user:xyz', profile1);
+            graph.addNode('user', 'user:zzz', profile2);
+
+            const similar = service.getSimilarUsers(normalise([1, 2, 3]));
+            expect(similar).toHaveLength(2);
         });
     });
 });

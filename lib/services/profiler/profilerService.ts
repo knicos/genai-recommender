@@ -160,6 +160,8 @@ export default class ProfilerService {
             oldProfile.profile = data;
             this.internalProfiles.set(id, oldProfile);
 
+            this.indexUser(id);
+
             if (oldData !== data || !hadProfile) {
                 // Emit event, but it is not out-of-date.
                 this.broker.emit(`profile-${id}`);
