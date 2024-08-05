@@ -365,4 +365,12 @@ export default class ProfilerService {
             user.profile.name = anonUsername();
         });
     }
+
+    public getEngagedContent(id: UserNodeId, count?: number) {
+        return this.graph.getRelated(
+            'engaged',
+            id,
+            count ? { count, timeDecay: 0.1, period: 60 * 60 * 1000 } : undefined
+        );
+    }
 }

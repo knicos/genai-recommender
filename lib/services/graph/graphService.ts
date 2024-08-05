@@ -1,5 +1,5 @@
 import { NodeType, NodeID, EdgeType, SourceFor, DestinationFor, Edge, GNode, WeightedNode } from './graphTypes';
-import GraphState from './state';
+import GraphState, { dump, dumpJSON, dumpNodes } from './state';
 import { addEdge, addEdges, addOrAccumulateEdge, getEdge, getEdges, getEdgesOfType, getEdgeWeights } from './edges';
 import { addNode, addNodeIfNotExists, removeNode, touchNode, updateNode } from './nodes';
 import { getRelated, QueryOptions } from './query';
@@ -152,5 +152,17 @@ export default class GraphService {
     ): WeightedNode<R>[] {
         const edges = this.getEdgesOfType<T, N, Edge<N, R>>(type, node);
         return getRelated(edges, options);
+    }
+
+    public dumpNodes() {
+        return dumpNodes(this.state);
+    }
+
+    public dump() {
+        return dump(this.state);
+    }
+
+    public dumpJSON() {
+        return dumpJSON(this.state);
     }
 }
