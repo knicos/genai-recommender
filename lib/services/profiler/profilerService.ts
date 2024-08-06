@@ -216,7 +216,8 @@ export default class ProfilerService {
     }
 
     public setUser(id: UserNodeId) {
-        this.userID = this.graph.addNode('user', id);
+        this.graph.addNodeIfNotExists('user', id);
+        this.userID = id;
         window.sessionStorage.setItem(USER_KEY, this.userID);
     }
 
