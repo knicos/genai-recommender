@@ -3,6 +3,7 @@ import { getContentService } from '../content';
 import { getGraphService } from '../graph';
 import ProfilerService from './profilerService';
 export * from './profilerTypes';
+export * from './empty';
 
 export { ProfilerService };
 
