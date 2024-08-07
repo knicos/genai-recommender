@@ -4,6 +4,7 @@ export type EdgeType =
     | 'similar'
     | 'liked'
     | 'shared'
+    | 'author'
     | 'comment'
     | 'engaged'
     | 'coengaged'
@@ -73,6 +74,8 @@ type UserReactedTopicEdge = GenericEdge<'reacted_topic', UserNodeId, TopicNodeId
 type TopicChildEdge = GenericEdge<'child', TopicNodeId, TopicNodeId>;
 type TopicParentEdge = GenericEdge<'parent', TopicNodeId, TopicNodeId>;
 type SimilarUserEdge = GenericEdge<'similar', UserNodeId, UserNodeId>;
+type AuthorContentEdge = GenericEdge<'author', UserNodeId, ContentNodeId>;
+type AuthorUserEdge = GenericEdge<'author', ContentNodeId, UserNodeId>;
 
 export type EdgeTypes =
     | ContentTopicEdge
@@ -97,6 +100,8 @@ export type EdgeTypes =
     | UserReactedTopicEdge
     | TopicParentEdge
     | SimilarUserEdge
+    | AuthorContentEdge
+    | AuthorUserEdge
     | TopicChildEdge;
 export type BiEdgeTypes =
     | UserEngagedContentEdge

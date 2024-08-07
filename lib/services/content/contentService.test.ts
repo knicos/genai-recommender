@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'vitest';
+import { describe, it, beforeEach, vi } from 'vitest';
 import { GraphService } from '../graph';
 import ContentService from './contentService';
 import ServiceBroker from '../broker';
@@ -33,6 +33,24 @@ describe('ContentService', () => {
 
             expect(service.hasContent('content:xyz')).toBe(true);
             expect(graph.getEdgesOfType('topic', 'content:xyz')).toHaveLength(1);
+        });
+
+        it('posts content by author', async ({ expect }) => {
+            const postFn = vi.fn();
+            const userId = graph.addNode('user');
+
+            broker.on('posted', postFn);
+
+            service.addContent('someurl', {
+                labels: [],
+                id: 'xyz',
+                author: 'TestAuthor',
+                authorId: userId,
+            });
+
+            expect(service.hasContent('content:xyz')).toBe(true);
+            expect(postFn).toHaveBeenCalledWith('content:xyz', userId);
+            expect(graph.getEdge('author', 'content:xyz', userId)).toBeTruthy();
         });
     });
 

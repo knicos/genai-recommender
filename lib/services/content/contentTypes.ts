@@ -22,6 +22,7 @@ export interface ContentMetadata {
     id: string;
     caption?: string;
     author?: string;
+    authorId?: UserNodeId;
     disableComments?: boolean;
     disableLikes?: boolean;
     disableShare?: boolean;

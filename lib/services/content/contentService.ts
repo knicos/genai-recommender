@@ -226,6 +226,12 @@ export default class ContentService {
                     this.graph.addEdge('content', tid, cid, l.weight);
                 }
             });
+
+            if (meta.authorId) {
+                this.graph.addEdge('author', meta.authorId, cid);
+                this.graph.addEdge('author', cid, meta.authorId);
+                this.broker.emit('posted', cid, meta.authorId);
+            }
         } catch (e) {
             console.warn(e);
         }
