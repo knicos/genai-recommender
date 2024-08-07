@@ -148,6 +148,10 @@ export default class ContentService {
         return !opts?.noSave ? this.encoder.save() : undefined;
     }
 
+    public hasEncoder() {
+        return !!this.encoder;
+    }
+
     public getContentData(id: ContentNodeId) {
         return this.state.dataStore.get(id);
     }
@@ -181,7 +185,7 @@ export default class ContentService {
         });
     }
 
-    private async createEmbedding(data: string): Promise<Embedding> {
+    async createEmbedding(data: string | HTMLCanvasElement): Promise<Embedding> {
         if (!this.encoder) {
             throw new Error('no_autoencoder');
         }
