@@ -6,6 +6,12 @@ import ProfilerService from './profilerService';
 import { createEmptyProfile } from './empty';
 import { normalise } from '@base/main';
 
+async function delay(time: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, time);
+    });
+}
+
 describe('ProfilerService', () => {
     let broker = new ServiceBroker();
     let graph = new GraphService(broker);
@@ -74,6 +80,35 @@ describe('ProfilerService', () => {
             broker.emit('activity-engagement', 'user:xyz', 'content:zzz', 1, 100);
             expect(graph.getEdge('engaged', 'user:xyz', 'content:zzz')?.weight).toBe(1);
             expect(graph.getEdge('engaged', 'content:zzz', 'user:xyz')?.weight).toBe(1);
+        });
+    });
+
+    describe('getUserContent()', () => {
+        it('returns all authored content in chronological order', async ({ expect }) => {
+            service.createUserProfile('user:xyz', 'TestUser6');
+            content.addContent('data', { id: '1', labels: [], authorId: 'user:xyz' });
+            content.addContent('data', { id: '2', labels: [], authorId: 'user:xyz' });
+            content.addContent('data', { id: '3', labels: [], authorId: 'user:xyz' });
+
+            const ownContent = service.getUserContent('user:xyz');
+            expect(ownContent).toHaveLength(3);
+            expect(ownContent).toContain('content:1');
+            expect(ownContent).toContain('content:2');
+            expect(ownContent).toContain('content:3');
+        });
+
+        it('returns most recent only', async ({ expect }) => {
+            service.createUserProfile('user:xyz', 'TestUser6');
+            content.addContent('data', { id: '1', labels: [], authorId: 'user:xyz' });
+            await delay(100);
+            content.addContent('data', { id: '2', labels: [], authorId: 'user:xyz' });
+            await delay(100);
+            content.addContent('data', { id: '3', labels: [], authorId: 'user:xyz' });
+
+            const ownContent = service.getUserContent('user:xyz', 2);
+            expect(ownContent).toHaveLength(2);
+            expect(ownContent[0]).toBe('content:3');
+            expect(ownContent[1]).toBe('content:2');
         });
     });
 });

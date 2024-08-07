@@ -331,6 +331,10 @@ export default class ProfilerService {
         this.userIndex.add(id, this.getUserProfile(id).embeddings.taste);
     }
 
+    public getUserContent(id: UserNodeId, count?: number) {
+        return this.graph.getRelated('author', id, { count, weightFn: (edge) => edge.timestamp }).map((r) => r.id);
+    }
+
     public getSimilarUsers(embedding: Embedding, count?: number) {
         // Force all profiles to be up-to-date
         if (this.outOfDate.size > 0) {
