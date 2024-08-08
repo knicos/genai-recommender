@@ -41,6 +41,8 @@ export interface UserNodeData {
     image?: ContentNodeId;
     engagement: number;
     lastUpdated: number;
+    followerCount: number;
+    followsCount: number;
 }
 
 export type Features = typeof defaults;

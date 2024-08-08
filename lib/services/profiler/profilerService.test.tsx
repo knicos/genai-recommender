@@ -83,6 +83,19 @@ describe('ProfilerService', () => {
         });
     });
 
+    describe('Follow activity', () => {
+        it('logs follow events', async ({ expect }) => {
+            service.createUserProfile('user:xyz', 'TestUser5');
+            content.addContent('data', { id: 'zzz', labels: [], authorId: 'user:xyz' });
+
+            broker.emit('logdata-follow', 'user:xyz', { id: 'content:zzz', activity: 'follow', timestamp: 100 });
+
+            const profile = service.getUserProfile('user:xyz');
+            expect(profile.followsCount).toBe(1);
+            expect(profile.followerCount).toBe(1);
+        });
+    });
+
     describe('getUserContent()', () => {
         it('returns all authored content in chronological order', async ({ expect }) => {
             service.createUserProfile('user:xyz', 'TestUser6');
