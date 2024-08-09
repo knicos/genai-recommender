@@ -54,6 +54,25 @@ describe('ContentService', () => {
         });
     });
 
+    describe('addContentData', () => {
+        it('emits an update event', async ({ expect }) => {
+            const meta = {
+                labels: [],
+                id: 'xyz',
+                author: 'TestAuthor',
+            };
+            service.addContentMeta(meta);
+
+            const eventFn = vi.fn();
+            broker.on('contentupdate', eventFn);
+
+            expect(service.hasContent('content:xyz')).toBe(true);
+
+            service.addContentData('somedata', meta);
+            expect(eventFn).toHaveBeenCalledWith('content:xyz');
+        });
+    });
+
     describe('getContentData', () => {
         it('can get existing content data', async ({ expect }) => {
             service.addContent('someurl', {
@@ -67,6 +86,20 @@ describe('ContentService', () => {
 
         it('returns undefined if there is no data', async ({ expect }) => {
             expect(service.getContentData('content:xyz')).toBeUndefined();
+        });
+
+        it('emits a missing event if no data', async ({ expect }) => {
+            service.addContentMeta({
+                labels: [],
+                id: 'xyz',
+                author: 'TestAuthor',
+            });
+
+            const eventFn = vi.fn();
+            broker.on('contentmissing', eventFn);
+
+            expect(service.getContentData('content:xyz')).toBe(undefined);
+            expect(eventFn).toHaveBeenCalledWith('content:xyz');
         });
     });
 

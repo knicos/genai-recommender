@@ -153,7 +153,11 @@ export default class ContentService {
     }
 
     public getContentData(id: ContentNodeId) {
-        return this.state.dataStore.get(id);
+        const data = this.state.dataStore.get(id);
+        if (!data && this.state.metaStore.has(id)) {
+            this.broker.emit('contentmissing', id);
+        }
+        return data;
     }
 
     public getContentMetadata(id: ContentNodeId) {
@@ -197,21 +201,14 @@ export default class ContentService {
         return embedding[0];
     }
 
-    public addContent(data: string, meta: ContentMetadata) {
-        this.state.dataStore.set(`content:${meta.id}`, data);
+    public addContentMeta(meta: ContentMetadata) {
         this.state.metaStore.set(`content:${meta.id}`, meta);
 
         if (meta.embedding) {
             // Ensure this since we rely on it.
             meta.embedding = normalise(meta.embedding);
         } else {
-            this.createEmbedding(data)
-                .then((e) => {
-                    meta.embedding = normalise(e);
-                })
-                .catch((e) => {
-                    console.error(e);
-                });
+            console.error('No content embedding');
         }
 
         try {
@@ -235,6 +232,33 @@ export default class ContentService {
         } catch (e) {
             console.warn(e);
         }
+    }
+
+    public addContentData(data: string, meta: ContentMetadata) {
+        const cid: ContentNodeId = `content:${meta.id}`;
+        this.state.dataStore.set(cid, data);
+
+        if (!meta.embedding) {
+            this.createEmbedding(data)
+                .then((e) => {
+                    meta.embedding = normalise(e);
+                })
+                .catch((e) => {
+                    console.error(e);
+                });
+        }
+
+        if (!this.hasContent(cid)) {
+            this.addContentMeta(meta);
+        }
+
+        this.broker.emit('contentupdate', cid);
+        this.broker.emit(`contentupdate-${cid}`);
+    }
+
+    public addContent(data: string, meta: ContentMetadata) {
+        this.addContentMeta(meta);
+        this.addContentData(data, meta);
     }
 
     public removeContent(id: ContentNodeId) {

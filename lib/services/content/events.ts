@@ -4,4 +4,13 @@ type PostedEvent = {
     posted: [id: ContentNodeId, user: UserNodeId];
 };
 
-export type ContentEvents = PostedEvent;
+type ContentUpdateEvent = {
+    contentupdate: [id: ContentNodeId];
+    [key: `contentupdate-${ContentNodeId}`]: [];
+};
+
+type MissingContentEvent = {
+    contentmissing: [id: ContentNodeId];
+};
+
+export type ContentEvents = PostedEvent & ContentUpdateEvent & MissingContentEvent;
