@@ -41,7 +41,7 @@ describe('ContentService', () => {
 
             broker.on('posted', postFn);
 
-            service.addContent('someurl', {
+            service.postContent('someurl', {
                 labels: [],
                 id: 'xyz',
                 author: 'TestAuthor',

@@ -99,9 +99,9 @@ describe('ProfilerService', () => {
     describe('getUserContent()', () => {
         it('returns all authored content in chronological order', async ({ expect }) => {
             service.createUserProfile('user:xyz', 'TestUser6');
-            content.addContent('data', { id: '1', labels: [], authorId: 'user:xyz' });
-            content.addContent('data', { id: '2', labels: [], authorId: 'user:xyz' });
-            content.addContent('data', { id: '3', labels: [], authorId: 'user:xyz' });
+            content.postContent('data', { id: '1', labels: [], authorId: 'user:xyz' });
+            content.postContent('data', { id: '2', labels: [], authorId: 'user:xyz' });
+            content.postContent('data', { id: '3', labels: [], authorId: 'user:xyz' });
 
             const ownContent = service.getUserContent('user:xyz');
             expect(ownContent).toHaveLength(3);
@@ -112,11 +112,11 @@ describe('ProfilerService', () => {
 
         it('returns most recent only', async ({ expect }) => {
             service.createUserProfile('user:xyz', 'TestUser6');
-            content.addContent('data', { id: '1', labels: [], authorId: 'user:xyz' });
+            content.postContent('data', { id: '1', labels: [], authorId: 'user:xyz' });
             await delay(100);
-            content.addContent('data', { id: '2', labels: [], authorId: 'user:xyz' });
+            content.postContent('data', { id: '2', labels: [], authorId: 'user:xyz' });
             await delay(100);
-            content.addContent('data', { id: '3', labels: [], authorId: 'user:xyz' });
+            content.postContent('data', { id: '3', labels: [], authorId: 'user:xyz' });
 
             const ownContent = service.getUserContent('user:xyz', 2);
             expect(ownContent).toHaveLength(2);
