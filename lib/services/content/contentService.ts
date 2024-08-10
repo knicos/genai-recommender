@@ -223,6 +223,11 @@ export default class ContentService {
                     this.graph.addEdge('content', tid, cid, l.weight);
                 }
             });
+
+            if (meta.authorId) {
+                this.graph.addEdge('author', meta.authorId, cid);
+                this.graph.addEdge('author', cid, meta.authorId);
+            }
         } catch (e) {
             console.warn(e);
         }
@@ -259,8 +264,6 @@ export default class ContentService {
         this.addContent(data, meta);
         if (meta.authorId) {
             const cid: ContentNodeId = `content:${meta.id}`;
-            this.graph.addEdge('author', meta.authorId, cid);
-            this.graph.addEdge('author', cid, meta.authorId);
             this.broker.emit('posted', cid, meta.authorId);
         }
     }
