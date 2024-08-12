@@ -13,4 +13,14 @@ type MissingContentEvent = {
     contentmissing: [id: ContentNodeId];
 };
 
-export type ContentEvents = PostedEvent & ContentUpdateEvent & MissingContentEvent;
+type CommentEvent = {
+    contentcomment: [id: ContentNodeId];
+    [key: `contentcomment-${ContentNodeId}`]: [];
+};
+
+type ContentStatsEvent = {
+    contentstats: [id: ContentNodeId];
+    [key: `contentstats-${ContentNodeId}`]: [];
+};
+
+export type ContentEvents = PostedEvent & ContentUpdateEvent & MissingContentEvent & CommentEvent & ContentStatsEvent;

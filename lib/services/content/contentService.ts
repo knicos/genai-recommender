@@ -279,6 +279,8 @@ export default class ContentService {
         comments.push({ userId: user, comment, timestamp: ts });
         comments.sort((a, b) => b.timestamp - a.timestamp);
         this.state.commentStore.set(id, comments);
+        this.broker.emit('contentcomment', id);
+        this.broker.emit(`contentcomment-${id}`);
     }
 
     public removeCommentsBy(id: UserNodeId) {
@@ -315,6 +317,8 @@ export default class ContentService {
         const stats = this.state.statsStore.get(id) || createEmptyStats();
         stats.reactions += 1;
         this.state.statsStore.set(id, stats);
+        this.broker.emit('contentstats', id);
+        this.broker.emit(`contentstats-${id}`);
     }
 
     public addContentEngagement(id: ContentNodeId, value: number) {
@@ -322,6 +326,8 @@ export default class ContentService {
         stats.engagement += value;
         this.state.statsStore.set(id, stats);
         this.topEngagement = Math.max(this.topEngagement, stats.engagement);
+        this.broker.emit('contentstats', id);
+        this.broker.emit(`contentstats-${id}`);
     }
 
     public getMaxContentEngagement() {
@@ -338,6 +344,8 @@ export default class ContentService {
         const stats = this.state.statsStore.get(id) || createEmptyStats();
         stats.shares += 1;
         this.state.statsStore.set(id, stats);
+        this.broker.emit('contentstats', id);
+        this.broker.emit(`contentstats-${id}`);
     }
 
     public updateContentStats(stats: ContentStatsId[]) {
@@ -345,6 +353,8 @@ export default class ContentService {
             const old = this.state.statsStore.get(s.id) || createEmptyStats();
             old.reactions = Math.max(old.reactions, s.reactions);
             this.state.statsStore.set(s.id, s);
+            this.broker.emit('contentstats', s.id);
+            this.broker.emit(`contentstats-${s.id}`);
         });
     }
 
