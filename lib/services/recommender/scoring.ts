@@ -6,6 +6,8 @@ import { UserNodeData } from '../profiler';
 import { GraphService } from '../graph';
 import { ContentService } from '../content';
 
+const RAND_COMPONENT = 0.001;
+
 function normalise(v: number[]) {
     const sum = v.reduce((s, i) => s + i, 0);
     return sum > 0 ? v.map((i) => i / sum) : v.slice();
@@ -48,7 +50,7 @@ function optionsWeights(options?: ScoringOptions) {
         following: options?.noFollowingScore ? 0 : 1,
         reaction: options?.noReactionScore ? 0 : 1,
         lastSeen: options?.noLastSeenScore ? 0 : 1,
-        random: 0,
+        random: 0.0,
     };
     return weights;
 }
@@ -99,6 +101,11 @@ export function scoreCandidates(
 ): ScoredRecommendation[] {
     const results = calculateScores(graph, content, userId, candidates, profile, options);
 
+    // Inject some tiny randomness here to prevent identical scores
+    results.forEach((r) => {
+        r.score = (1 - RAND_COMPONENT) * r.score + RAND_COMPONENT * Math.random();
+    });
+
     results.sort((a, b) => b.score - a.score);
     results.forEach((r, ix) => {
         r.rank = ix;
@@ -126,44 +133,54 @@ export function scoringProbability(
     const results = calculateScores(graph, content, userId, candidates, profile, options);
 
     results.sort((a, b) => b.score - a.score);
-    const totalScores = results.reduce((s, v) => s + v.score, 0);
 
-    if (totalScores === 0) {
-        results.forEach((r, ix) => {
-            r.rank = ix / results.length;
-            r.probability = (r.candidateProbability || 0) * (1 / results.length);
-        });
-        return results;
+    const rankTally = new Map<number, number>();
+
+    for (let i = 0; i < results.length; ++i) {
+        const r = results[i];
+        if (i === 0 || r.score < results[i - 1].score) {
+            r.rank = i;
+        } else {
+            r.rank = results[i - 1].rank;
+            rankTally.set(r.rank, (rankTally.get(r.rank) || 1) + 1);
+        }
     }
 
-    // Claude.ai solution
     if (options?.selection === 'distribution') {
-        results.forEach((r, ix) => {
-            r.rank = (ix - 0.5) / results.length;
-            const p = 1 - beta.cdf(r.rank, ALPHA, BETA);
-            r.probability = (r.candidateProbability || 0) * p;
-        });
-
-        // Normalise the probabilities
-        const sumP = results.reduce((s, r) => s + (r.probability || 0), 0);
         results.forEach((r) => {
-            r.probability = (r.probability || 0) / sumP;
+            const tally = rankTally.get(r.rank) || 1;
+            r.rank = (r.rank - 0.5) / results.length;
+            const p = 1 - beta.cdf(r.rank, ALPHA, BETA);
+            r.probability = (r.candidateProbability || 0) * p * (1 / tally);
         });
     } else {
-        const accumProb = results.map((a) => 1 - (a.candidateProbability || 0) * (1 / count));
+        const accumProb = results.map((a) => {
+            return 1 - (a.candidateProbability || 0) * (1 / count);
+        });
         for (let i = 1; i < accumProb.length; ++i) {
             const p = accumProb[i];
             const p1 = accumProb[i - 1];
-            accumProb[i] = p1 * p;
+            if (results[i].rank !== results[i - 1].rank) {
+                accumProb[i] = p1 * p;
+            } else {
+                accumProb[i] = p1;
+            }
         }
 
         results.forEach((r, i) => {
+            const tally = rankTally.get(r.rank) || 1;
             const sp1 = i >= 1 ? accumProb[i - 1] : 1;
-            const p = (r.candidateProbability || 0) * sp1;
+            const p = (r.candidateProbability || 0) * sp1 * (1 / tally);
             r.probability = 1 - Math.pow(1 - p, count);
-            r.rank = i / results.length;
+            r.rank = r.rank / results.length;
         });
     }
+
+    // Normalise the probabilities
+    const sumP = results.reduce((s, r) => s + (r.probability || 0), 0);
+    results.forEach((r) => {
+        r.probability = (r.probability || 0) / sumP;
+    });
 
     return results;
 }

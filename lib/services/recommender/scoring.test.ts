@@ -1,11 +1,115 @@
 import { beforeEach, describe, it } from 'vitest';
-import { scoreCandidates } from './scoring';
+import { scoreCandidates, scoringProbability } from './scoring';
 import { Recommendation } from './recommenderTypes';
 import { normalise } from '@base/utils/embedding';
 import ServiceBroker from '../broker';
 import { GraphService } from '../graph';
 import { ContentService } from '../content';
 import { ProfilerService } from '../profiler';
+
+describe('Scoring.scoringProbability()', () => {
+    let broker = new ServiceBroker();
+    let graph = new GraphService(broker);
+    let content = new ContentService(broker, graph);
+    let profiler = new ProfilerService(broker, graph, content);
+
+    beforeEach(() => {
+        broker = new ServiceBroker();
+        graph = new GraphService(broker);
+        content = new ContentService(broker, graph);
+        profiler = new ProfilerService(broker, graph, content);
+    });
+
+    it('calculates a random rank probability correctly', async ({ expect }) => {
+        const profile = profiler.createUserProfile('user:xyz', 'TestUser');
+        const candidates: Recommendation[] = [
+            {
+                contentId: 'content:1',
+                candidateOrigin: 'random',
+                timestamp: Date.now(),
+                candidateProbability: 0.1,
+            },
+            {
+                contentId: 'content:2',
+                candidateOrigin: 'random',
+                timestamp: Date.now(),
+                candidateProbability: 0.1,
+            },
+            {
+                contentId: 'content:3',
+                candidateOrigin: 'random',
+                timestamp: Date.now(),
+                candidateProbability: 0.1,
+            },
+            {
+                contentId: 'content:4',
+                candidateOrigin: 'random',
+                timestamp: Date.now(),
+                candidateProbability: 0.1,
+            },
+        ];
+        const scored = scoringProbability(graph, content, 'user:xyz', candidates, profile, 1, {
+            noTasteScore: true,
+            noPopularity: true,
+            noViewingScore: true,
+            noCoengagementScore: true,
+            noFollowingScore: true,
+            noCommentingScore: true,
+            noReactionScore: true,
+            noSharingScore: true,
+            selection: 'rank',
+        });
+
+        expect(scored).toHaveLength(4);
+        expect(scored[1].probability).toBe(scored[2].probability);
+    });
+
+    it('calculates a random distribution probability correctly', async ({ expect }) => {
+        const profile = profiler.createUserProfile('user:xyz', 'TestUser');
+        const candidates: Recommendation[] = [
+            {
+                contentId: 'content:1',
+                candidateOrigin: 'random',
+                timestamp: Date.now(),
+                candidateProbability: 0.1,
+            },
+            {
+                contentId: 'content:2',
+                candidateOrigin: 'random',
+                timestamp: Date.now(),
+                candidateProbability: 0.1,
+            },
+            {
+                contentId: 'content:3',
+                candidateOrigin: 'random',
+                timestamp: Date.now(),
+                candidateProbability: 0.1,
+            },
+            {
+                contentId: 'content:4',
+                candidateOrigin: 'random',
+                timestamp: Date.now(),
+                candidateProbability: 0.1,
+            },
+        ];
+        const scored = scoringProbability(graph, content, 'user:xyz', candidates, profile, 1, {
+            noTasteScore: true,
+            noPopularity: true,
+            noViewingScore: true,
+            noCoengagementScore: true,
+            noFollowingScore: true,
+            noCommentingScore: true,
+            noReactionScore: true,
+            noSharingScore: true,
+            selection: 'distribution',
+        });
+
+        console.log(scored);
+
+        expect(scored).toHaveLength(4);
+        expect(scored[1].probability).toBe(scored[2].probability);
+    });
+});
 
 describe('Scoring.scoreCandidates()', () => {
     let broker = new ServiceBroker();

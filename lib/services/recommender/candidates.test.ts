@@ -130,6 +130,34 @@ describe('Candidates.candidateProbabilities()', () => {
         expect(p).toBe(1);
     });
 
+    it('calculates a probability for random candidates', async ({ expect }) => {
+        content.addContent('', { id: '1', labels: [] });
+        content.addContent('', { id: '2', labels: [] });
+        content.addContent('', { id: '3', labels: [] });
+        content.addContent('', { id: '4', labels: [] });
+        content.addContent('', { id: '5', labels: [] });
+        const p1 = candidateProbabilities(
+            graph,
+            content,
+            profiler,
+            createEmptyProfile('user:1', 'Test'),
+            5,
+            { popular: 0, taste: 0, coengaged: 0, similarUsers: 0, random: 2 },
+            'content:1'
+        );
+        const p2 = candidateProbabilities(
+            graph,
+            content,
+            profiler,
+            createEmptyProfile('user:2', 'Test'),
+            5,
+            { popular: 0, taste: 0, coengaged: 0, similarUsers: 0, random: 2 },
+            'content:4'
+        );
+
+        expect(p1).toBeCloseTo(p2);
+    });
+
     it('calculates a probability for taste candidates', async ({ expect }) => {
         content.addContent('', { id: 'ggg', labels: [] });
         const topicID = addTopic(graph, 'topic1');
