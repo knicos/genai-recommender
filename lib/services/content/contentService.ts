@@ -79,9 +79,7 @@ export default class ContentService {
             case 'unreact':
                 this.removeContentReaction(content);
                 break;
-            case 'share_friends':
             case 'share_public':
-            case 'share_private':
                 this.addContentShare(content);
                 break;
             case 'engagement':

@@ -9,8 +9,6 @@ const ACTIVITY_VALUES: { [key in LogActivity]: number } = {
     like: 0.1,
     unreact: -0.1,
     share_public: 0.5,
-    share_private: 0.1,
-    share_friends: 0.3,
     dwell: 0.3,
     follow: 0.5,
     unfollow: -0.5,

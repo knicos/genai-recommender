@@ -5,8 +5,6 @@ export type ReactionType = 'like' | 'unreact';
 export type LogActivity =
     | ReactionType
     | 'share_public'
-    | 'share_private'
-    | 'share_friends'
     | 'hide'
     | 'hide_similar'
     | 'comment'

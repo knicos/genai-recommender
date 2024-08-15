@@ -92,14 +92,6 @@ export default class ProfilerService {
             this.topicAffinity(id, 'shared_topic', log.id || 'content:', 1, log.timestamp)
         );
 
-        this.broker.on('logdata-share_friends', (id, log) =>
-            this.topicAffinity(id, 'shared_topic', log.id || 'content:', 1, log.timestamp)
-        );
-
-        this.broker.on('logdata-share_private', (id, log) =>
-            this.topicAffinity(id, 'shared_topic', log.id || 'content:', 1, log.timestamp)
-        );
-
         this.broker.on('logdata-follow', (id, log) => {
             this.topicAffinity(id, 'followed_topic', log.id || 'content:', 1, log.timestamp);
             if (log.id) {
@@ -107,7 +99,7 @@ export default class ProfilerService {
                 if (contentMeta?.authorId) {
                     const originUser = this.getUserData(id);
                     const followedUser = this.getUserData(contentMeta.authorId);
-                    console.log('SHOULD FOLLOW', contentMeta);
+
                     if (originUser) {
                         originUser.followsCount += 1;
                     }
