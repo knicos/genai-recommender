@@ -1,4 +1,4 @@
-import { ContentNodeId } from '../graph';
+import { ContentNodeId, UserNodeId } from '../graph';
 
 export type ReactionType = 'like' | 'unreact';
 
@@ -32,4 +32,5 @@ export interface LogEntry {
     timestamp: number;
     value?: number;
     content?: string;
+    user?: UserNodeId;
 }

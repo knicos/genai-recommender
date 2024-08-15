@@ -94,6 +94,17 @@ describe('ProfilerService', () => {
             expect(profile.followsCount).toBe(1);
             expect(profile.followerCount).toBe(1);
         });
+
+        it('logs follow events for non users', async ({ expect }) => {
+            service.createUserProfile('user:xyz', 'TestUser5');
+            content.addContent('data', { id: 'zzz', labels: [] });
+
+            broker.emit('logdata-follow', 'user:xyz', { id: 'content:zzz', activity: 'follow', timestamp: 100 });
+
+            const profile = service.getUserProfile('user:xyz');
+            expect(profile.followsCount).toBe(1);
+            expect(profile.followerCount).toBe(0);
+        });
     });
 
     describe('getUserContent()', () => {

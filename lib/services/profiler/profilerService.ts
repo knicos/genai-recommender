@@ -96,13 +96,14 @@ export default class ProfilerService {
             this.topicAffinity(id, 'followed_topic', log.id || 'content:', 1, log.timestamp);
             if (log.id) {
                 const contentMeta = this.content.getContentMetadata(log.id);
+                const originUser = this.getUserData(id);
+                if (originUser) {
+                    originUser.followsCount += 1;
+                }
+
                 if (contentMeta?.authorId) {
-                    const originUser = this.getUserData(id);
                     const followedUser = this.getUserData(contentMeta.authorId);
 
-                    if (originUser) {
-                        originUser.followsCount += 1;
-                    }
                     if (followedUser) {
                         followedUser.followerCount += 1;
                     }
