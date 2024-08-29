@@ -104,6 +104,7 @@ export default class GraphService {
         const nid = addNode(this.state, type, id, data);
         this.broker.emit(`nodetype-${type}`, nid);
         this.broker.emit(`node-${nid}`);
+        this.broker.emit(`newnodetype-${type}`, nid);
         return nid;
     }
 
@@ -116,6 +117,9 @@ export default class GraphService {
         if ((!nid && data) || nid) {
             this.broker.emit(`nodetype-${type}`, nid || id);
             this.broker.emit(`node-${nid || id}`);
+        }
+        if (nid) {
+            this.broker.emit(`newnodetype-${type}`, nid);
         }
         return nid;
     }
