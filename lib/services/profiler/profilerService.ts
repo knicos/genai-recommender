@@ -169,6 +169,8 @@ export default class ProfilerService {
 
             this.indexUser(id);
 
+            this.globalStats.engagement = Math.max(this.globalStats.engagement, data.engagement || 0);
+
             if (oldData !== data || !hadProfile) {
                 // Emit event, but it is not out-of-date.
                 this.broker.emit(`profile-${id}`);
