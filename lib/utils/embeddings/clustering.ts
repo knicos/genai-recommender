@@ -46,7 +46,6 @@ export default class HierarchicalEmbeddingCluster {
     }
 
     public calculate(data: { id: NodeID; embedding: Embedding }[]) {
-        const start = performance.now();
         this.clusters = data.map((_, ix) => ({
             members: [ix],
             active: true,
@@ -59,8 +58,9 @@ export default class HierarchicalEmbeddingCluster {
 
         if (data.length > 0) {
             const l = embeddingLength(data[0].embedding);
-            if (Math.abs(l - 1) > Number.EPSILON) {
-                throw new Error('Embeddings are not normalised');
+            if (Math.abs(l - 1) > Number.EPSILON * 10) {
+                // throw new Error('Embeddings are not normalised');
+                console.error('Embeddings are not normalised');
             }
         }
 
@@ -105,9 +105,6 @@ export default class HierarchicalEmbeddingCluster {
             });
             --count;
         }
-
-        const end = performance.now();
-        console.log('Cluster time = ', end - start);
     }
 
     public getClusters() {

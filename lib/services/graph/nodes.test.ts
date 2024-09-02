@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'vitest';
+import { describe, it, beforeEach, vi } from 'vitest';
 import GraphService from './graphService';
 import ServiceBroker from '../broker';
 
@@ -24,6 +24,29 @@ describe('graph.addNode', () => {
     it('throws if the id already exists', async ({ expect }) => {
         service.addNode('content', 'content:mytestid');
         expect(() => service.addNode('content', 'content:mytestid')).toThrowError('id_exists');
+    });
+});
+
+describe('graph.addNodes', () => {
+    let broker = new ServiceBroker();
+    let service = new GraphService(broker);
+    beforeEach(() => {
+        broker = new ServiceBroker();
+        service = new GraphService(broker);
+    });
+
+    it('emits new node events for each', async ({ expect }) => {
+        const fn1 = vi.fn();
+
+        broker.on('newnodetype-content', fn1);
+
+        service.addNodes([
+            { id: 'content:1', type: 'content', timestamp: 100 },
+            { id: 'content:2', type: 'content', timestamp: 100 },
+        ]);
+
+        expect(fn1).toHaveBeenCalledWith('content:1');
+        expect(fn1).toHaveBeenCalledWith('content:2');
     });
 });
 
