@@ -3,31 +3,7 @@ import ServiceBroker from '../broker';
 import { ContentNodeId, UserNodeId } from '../graph';
 import { LogActivity, LogEntry } from './actionlogTypes';
 import ActionLogState, { UserContentId, UserLogEntry } from './state';
-
-const ACTIVITY_VALUES: { [key in LogActivity]: number } = {
-    seen: 0,
-    like: 0.1,
-    unreact: -0.1,
-    share_public: 0.5,
-    dwell: 0.3,
-    follow: 0.5,
-    unfollow: -0.5,
-    comment: 0.6,
-    hide: NaN,
-    begin: NaN,
-    end: NaN,
-    engagement: NaN,
-    hide_similar: NaN,
-    inactive: NaN,
-};
-
-const MIN_DWELL_TIME = 2000;
-const MAX_DWELL_TIME = 10000;
-const MAX_COMMENT_LENGTH = 80;
-
-function normDwell(d: number): number {
-    return Math.max(0, Math.min(10, (d - MIN_DWELL_TIME) / (MAX_DWELL_TIME - MIN_DWELL_TIME)));
-}
+import { activityEngagement, commentEngagement, dwellEngagement } from './engagement';
 
 export default class ActionLogService {
     public readonly broker: ServiceBroker;
@@ -49,14 +25,14 @@ export default class ActionLogService {
     }
 
     private dwellActivity(uid: UserNodeId, cid: ContentNodeId, dwell: number, timestamp: number) {
-        const value = normDwell(dwell) * ACTIVITY_VALUES.dwell;
+        const value = dwellEngagement(dwell);
         this.increaseContentEngagement(uid, cid, value);
         this.broker.emit('activity', 'dwell', uid, cid, value, timestamp);
         this.broker.emit('activity-dwell', uid, cid, value, timestamp);
     }
 
     private commentActivity(uid: UserNodeId, cid: ContentNodeId, score: number, timestamp: number) {
-        const value = Math.min(1, score / MAX_COMMENT_LENGTH) * ACTIVITY_VALUES.comment;
+        const value = commentEngagement(score);
         this.increaseContentEngagement(uid, cid, value);
         this.broker.emit('activity', 'comment', uid, cid, value, timestamp);
         this.broker.emit('activity-comment', uid, cid, value, timestamp);
@@ -93,9 +69,22 @@ export default class ActionLogService {
                 this.broker.emit('activity-engagement', aid, cid, data.value || 0, data.timestamp);
                 break;
             default:
-                this.increaseContentEngagement(aid, cid, ACTIVITY_VALUES[data.activity]);
-                this.broker.emit('activity', data.activity, aid, cid, ACTIVITY_VALUES[data.activity], data.timestamp);
-                this.broker.emit(`activity-${data.activity}`, aid, cid, ACTIVITY_VALUES[data.activity], data.timestamp);
+                this.increaseContentEngagement(aid, cid, activityEngagement(data.activity));
+                this.broker.emit(
+                    'activity',
+                    data.activity,
+                    aid,
+                    cid,
+                    activityEngagement(data.activity),
+                    data.timestamp
+                );
+                this.broker.emit(
+                    `activity-${data.activity}`,
+                    aid,
+                    cid,
+                    activityEngagement(data.activity),
+                    data.timestamp
+                );
                 break;
         }
 

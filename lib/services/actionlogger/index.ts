@@ -1,6 +1,7 @@
 import { getBroker } from '../broker';
 import ActionLogService from './actionlogService';
 export * from './actionlogTypes';
+export { engagementFromLog } from './engagement';
 
 export { ActionLogService };
 
