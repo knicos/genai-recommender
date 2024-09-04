@@ -12,3 +12,4 @@ export * from './helpers/similarUsers';
 export * from './helpers/userSnapshot';
 export * from './utils/embedding';
 export * from './utils/subsets';
+export * from './utils/anon';
