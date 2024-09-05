@@ -1,5 +1,4 @@
 import { ContentNodeId, UserNodeId, WeightedNode } from '@base/services/graph/graphTypes';
-import defaults from './defaultWeights.json';
 import { Embedding } from '@base/utils/embedding';
 import { WeightedLabel } from '../content';
 import { Scores } from '../recommender/recommenderTypes';
@@ -44,8 +43,6 @@ export interface UserNodeData {
     followerCount: number;
     followsCount: number;
 }
-
-export type Features = typeof defaults;
 
 export interface InternalUserProfile {
     id: UserNodeId;

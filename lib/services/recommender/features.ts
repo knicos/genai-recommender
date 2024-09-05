@@ -7,6 +7,7 @@ import { getLastSeenTime } from './scoring/seen';
 import { GraphService } from '../graph';
 import { ContentService } from '../content';
 import { UserNodeData } from '../profiler';
+import { getLastEngagedTime } from './scoring/engaged';
 
 export function makeFeatures(
     graph: GraphService,
@@ -35,6 +36,7 @@ export function makeFeatures(
             : calculateCoengagementScore(graph, userId, c.contentId);
 
         const lastSeenTime = options?.noLastSeenScore ? undefined : getLastSeenTime(graph, userId, c.contentId);
+        const lastEngaged = getLastEngagedTime(graph, userId, c.contentId);
 
         const popScore = options?.noPopularity
             ? 0
@@ -58,6 +60,7 @@ export function makeFeatures(
             coengagement: coengagementScore,
             lastSeen: lastSeenTime,
             popularity: popScore,
+            lastEngaged,
         };
     });
 }

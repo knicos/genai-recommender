@@ -133,7 +133,10 @@ describe('Scoring.scoreCandidates()', () => {
                 timestamp: Date.now(),
             },
         ];
-        const scored = scoreCandidates(graph, content, 'user:xyz', candidates, profile, { noLastSeenScore: true });
+        const scored = scoreCandidates(graph, content, 'user:xyz', candidates, profile, {
+            noLastSeenScore: true,
+            noLastEngagedScore: true,
+        });
         expect(scored).toHaveLength(1);
         expect(scored[0].score).toBeLessThanOrEqual(0.15);
     });
@@ -149,10 +152,29 @@ describe('Scoring.scoreCandidates()', () => {
                 timestamp: Date.now(),
             },
         ];
-        const scored = scoreCandidates(graph, content, 'user:xyz', candidates, profile);
+        const scored = scoreCandidates(graph, content, 'user:xyz', candidates, profile, {
+            noLastEngagedScore: true,
+            noLastSeenScore: true,
+        });
         expect(scored).toHaveLength(1);
         expect(scored[0].score).toBeGreaterThan(0.0);
         expect(scored[0].features.taste).toBeGreaterThan(0.01);
+    });
+
+    it('calculates prior engagement penalty', async ({ expect }) => {
+        const profile = profiler.createUserProfile('user:xyz', 'TestUser');
+        content.addContent('xxx', { labels: [], id: 'xyz2', embedding: normalise([0.9, 0.1]) });
+        content.broker.emit('activity-engagement', 'user:xyz', 'content:xyz2', 1, Date.now() - 10000);
+        const candidates: Recommendation[] = [
+            {
+                contentId: 'content:xyz2',
+                candidateOrigin: 'topic_affinity',
+                timestamp: Date.now(),
+            },
+        ];
+        const scored = scoreCandidates(graph, content, 'user:xyz', candidates, profile, { noLastSeenScore: true });
+        expect(scored).toHaveLength(1);
+        expect(scored[0].features.lastEngaged).toBeLessThan(0.1);
     });
 
     it('calculates a popularity score correctly', async ({ expect }) => {

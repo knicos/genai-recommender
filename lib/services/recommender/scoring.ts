@@ -41,16 +41,17 @@ function calculateSignificance(items: ScoredRecommendation[]) {
 
 function optionsWeights(options?: ScoringOptions) {
     const weights: Scores = {
-        taste: options?.noTasteScore ? 0 : 1,
-        coengagement: options?.noCoengagementScore ? 0 : 1,
-        viewing: options?.noViewingScore ? 0 : 1,
-        sharing: options?.noSharingScore ? 0 : 1,
-        commenting: options?.noCommentingScore ? 0 : 1,
-        popularity: options?.noPopularity ? 0 : 1,
-        following: options?.noFollowingScore ? 0 : 1,
-        reaction: options?.noReactionScore ? 0 : 1,
-        lastSeen: options?.noLastSeenScore ? 0 : 1,
+        taste: options?.noTasteScore ? 0 : options?.weights?.taste || 2,
+        coengagement: options?.noCoengagementScore ? 0 : options?.weights?.coengagement || 1,
+        viewing: options?.noViewingScore ? 0 : options?.weights?.viewing || 1.2,
+        sharing: options?.noSharingScore ? 0 : options?.weights?.sharing || 1,
+        commenting: options?.noCommentingScore ? 0 : options?.weights?.commenting || 1.2,
+        popularity: options?.noPopularity ? 0 : options?.weights?.popularity || 1,
+        following: options?.noFollowingScore ? 0 : options?.weights?.following || 1.2,
+        reaction: options?.noReactionScore ? 0 : options?.weights?.reaction || 1,
+        lastSeen: options?.noLastSeenScore ? 0 : options?.weights?.lastSeen || 3,
         random: 0.0,
+        lastEngaged: options?.noLastEngagedScore ? 0 : options?.weights?.lastEngaged || 5,
     };
     return weights;
 }
@@ -71,8 +72,8 @@ function calculateScores(
     const weights = normalise(
         keys.map((k) => {
             const ew = enabledWeights[k];
-            const fw = profile.featureWeights[k];
-            return (ew === undefined ? 1 : ew) * (fw === undefined ? 1 : fw);
+            //const fw = profile.featureWeights[k];
+            return ew === undefined ? 1 : ew;
         })
     );
     const scores = featureVectors.map((c) => c.map((f, ix) => (f || 0) * (weights[ix] || 0)));

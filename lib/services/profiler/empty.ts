@@ -1,10 +1,5 @@
 import { UserNodeId } from '../graph';
-import defaults from './defaultWeights.json';
 import { UserNodeData } from './profilerTypes';
-
-const defaultWeights = Array.from(Object.values(defaults));
-const weightKeys = Array.from(Object.keys(defaults));
-export { defaultWeights, weightKeys };
 
 export function createEmptyProfile(id: UserNodeId, name: string): UserNodeData {
     return {
@@ -28,7 +23,7 @@ export function createEmptyProfile(id: UserNodeId, name: string): UserNodeData {
                 users: [],
             },
         },
-        featureWeights: { ...defaults },
+        featureWeights: {},
         embeddings: {
             taste: new Array(20).fill(0),
         },

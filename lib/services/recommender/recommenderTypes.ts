@@ -33,6 +33,7 @@ export interface Scores {
     popularity?: number; // Total popularity (relative)
     quality?: number; // Assessed image quality score
     random?: number; // Some random component
+    lastEngaged?: number; // Time since last engagement
 }
 
 export interface ScoredRecommendation extends Recommendation {
@@ -56,6 +57,7 @@ export interface CandidateOptions {
 export interface ScoringOptions {
     noTasteScore?: boolean;
     noLastSeenScore?: boolean;
+    noLastEngagedScore?: boolean;
     noSharingScore?: boolean;
     noFollowingScore?: boolean;
     noReactionScore?: boolean;
@@ -65,6 +67,7 @@ export interface ScoringOptions {
     noPopularity?: boolean;
     excludeSignificance?: boolean;
     selection?: 'rank' | 'distribution';
+    weights?: Scores;
 }
 
 export type RecommendationOptions = ScoringOptions & CandidateOptions;
