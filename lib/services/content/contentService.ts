@@ -131,6 +131,9 @@ export default class ContentService {
         }
 
         const inDim = raw[0].length;
+        console.log('RAW', raw);
+        console.log('DIM', inDim);
+
         this.encoder = new AutoEncoder();
         this.encoder.create(opts?.dims || 20, inDim, opts?.layers || []);
 
@@ -145,6 +148,7 @@ export default class ContentService {
 
         // Replace all existing content embeddings
         const reduced = this.encoder.generate(raw);
+        console.log('REDUCED', reduced);
         let i = 0;
         this.state.dataStore.forEach((_, k) => {
             const meta = this.state.metaStore.get(k);
