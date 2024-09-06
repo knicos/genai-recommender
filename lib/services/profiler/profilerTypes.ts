@@ -3,8 +3,11 @@ import { Embedding } from '@base/utils/embedding';
 import { WeightedLabel } from '../content';
 import { Scores } from '../recommender/recommenderTypes';
 
+export type EmbeddingTypes = 'taste' | 'labels' | 'engagements';
+
 export interface UserEmbeddings {
     taste: Embedding;
+    type: EmbeddingTypes;
 }
 
 export interface TopicAffinities {
@@ -51,4 +54,16 @@ export interface InternalUserProfile {
     negativeRecommendations: number;
     seenItems: number;
     engagementTotal: number;
+}
+
+export interface SimilarityOptions {
+    count?: number;
+    algorithm?: 'cosine';
+}
+
+export interface ProfilingOptions {
+    embeddingType?: EmbeddingTypes;
+    summarySize?: number; // Number of entries in a summary
+    sessionDuration?: number; // ms to consider in action log
+    historySize?: number; // Number engagements to use, max.
 }

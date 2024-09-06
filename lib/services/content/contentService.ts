@@ -8,13 +8,17 @@ import MobileNetEmbedding from './mobilenet';
 import AutoEncoder from './autoencoder';
 import ServiceBroker from '../broker';
 import { LogActivity } from '../actionlogger/actionlogTypes';
+import { engagementEmbedding } from './engagementEmbedding';
 
 export interface CommentDataItem {
     content: ContentNodeId;
     comments: CommentEntry[];
 }
 
+export type EncoderType = 'mobilenet' | 'engagement' | 'coengagement';
+
 export interface EncoderOptions {
+    type?: EncoderType;
     epochs?: number;
     dims?: number;
     layers?: number[];
@@ -111,18 +115,25 @@ export default class ContentService {
     public async createEncoderModel(opts?: EncoderOptions): Promise<Blob | undefined> {
         const epochs = opts?.epochs || 200;
 
-        this.encoder = new AutoEncoder();
-        this.encoder.create(opts?.dims || 20, 1280, opts?.layers || []);
-
         if (!this.mobilenet) {
             this.mobilenet = new MobileNetEmbedding();
         }
 
         const images = Array.from(this.state.dataStore.values());
-        const raw = await this.mobilenet.generateEmbeddings(images);
+        let raw: Embedding[];
+        if (opts?.type === 'engagement') {
+            raw = engagementEmbedding(this.graph);
+        } else {
+            raw = await this.mobilenet.generateEmbeddings(images);
+        }
         if (opts?.onMobileNetDone) {
             opts.onMobileNetDone();
         }
+
+        const inDim = raw[0].length;
+        this.encoder = new AutoEncoder();
+        this.encoder.create(opts?.dims || 20, inDim, opts?.layers || []);
+
         await this.encoder.train(raw, epochs, (e, logs) => {
             if (opts?.onEpoch) {
                 opts.onEpoch(e, logs?.loss || 0, logs?.val_loss || 0);

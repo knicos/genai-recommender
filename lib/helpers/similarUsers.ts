@@ -1,13 +1,14 @@
 import { GraphService, UserNodeId, WeightedNode } from '@base/services/graph';
-import { ProfilerService } from '@base/services/profiler';
+import { ProfilerService, SimilarityOptions } from '@base/services/profiler';
 
 export function findSimilarUsers(
     graph: GraphService,
     profiler: ProfilerService,
-    id: UserNodeId
+    id: UserNodeId,
+    options?: SimilarityOptions
 ): WeightedNode<UserNodeId>[] {
     const ownProfile = profiler.getUserProfile(id);
-    const similar = profiler.getSimilarUsers(ownProfile.embeddings.taste, 10);
+    const similar = profiler.getSimilarUsers(ownProfile.embeddings.taste, options);
 
     // Cache the results in the graph
     similar.forEach((sim) => {

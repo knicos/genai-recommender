@@ -26,6 +26,7 @@ export function createEmptyProfile(id: UserNodeId, name: string): UserNodeData {
         featureWeights: {},
         embeddings: {
             taste: new Array(20).fill(0),
+            type: 'taste',
         },
         lastUpdated: Date.now(),
         followerCount: 0,

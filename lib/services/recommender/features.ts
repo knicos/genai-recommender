@@ -22,7 +22,7 @@ export function makeFeatures(
     return candidates.map((c) => {
         const tasteSimilarityScore = options?.noTasteScore
             ? undefined
-            : calculateEmbeddingScore(content, 'taste', profile, c.contentId);
+            : calculateEmbeddingScore(content, profile, c.contentId);
         const {
             viewingPreferenceScore,
             commentingPreferenceScore,

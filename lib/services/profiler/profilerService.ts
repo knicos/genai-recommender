@@ -1,6 +1,6 @@
 import ServiceBroker from '../broker';
 import { ContentNodeId, GraphService, isContentID, isUserID, UserNodeId } from '../graph';
-import { InternalUserProfile, UserNodeData } from './profilerTypes';
+import { InternalUserProfile, ProfilingOptions, SimilarityOptions, UserNodeData } from './profilerTypes';
 import { getTopicId } from '@base/helpers/topics';
 import { buildUserProfile } from './builder';
 import { anonUsername } from '@base/utils/anon';
@@ -39,6 +39,7 @@ export default class ProfilerService {
     public readonly broker: ServiceBroker;
     public readonly graph: GraphService;
     public readonly content: ContentService;
+    private options: ProfilingOptions = {};
     private userID?: UserNodeId;
     private internalProfiles = new Map<UserNodeId, InternalUserProfile>();
     private outOfDate = new Set<UserNodeId>();
@@ -192,6 +193,13 @@ export default class ProfilerService {
         }
     }
 
+    public setOptions(options: ProfilingOptions) {
+        this.options = { ...options };
+        this.internalProfiles.forEach((p) => {
+            this.outOfDate.add(p.id);
+        });
+    }
+
     public reset() {
         this.internalProfiles.clear();
         this.outOfDate.clear();
@@ -329,7 +337,7 @@ export default class ProfilerService {
             this.graph.updateNode(aid, createEmptyProfile(aid, 'NoName'));
         }
 
-        const newProfile = buildUserProfile(this.graph, this.content, aid, this.getUserData(aid));
+        const newProfile = buildUserProfile(this.graph, this.content, aid, this.getUserData(aid), this.options);
         this.graph.touchNode(aid);
         this.outOfDate.delete(aid);
         this.userIndex.add(aid, newProfile.embeddings.taste);
@@ -344,14 +352,17 @@ export default class ProfilerService {
         return this.graph.getRelated('author', id, { count, weightFn: (edge) => edge.timestamp }).map((r) => r.id);
     }
 
-    public getSimilarUsers(embedding: Embedding, count?: number) {
+    public getSimilarUsers(embedding: Embedding, options?: SimilarityOptions) {
         // Force all profiles to be up-to-date
         if (this.outOfDate.size > 0) {
             this.outOfDate.forEach((u) => {
                 this.getUserProfile(u);
             });
         }
-        return this.userIndex.search(embedding, { count });
+
+        // TODO: Rebuild the index if the data type or algorithm changes.
+
+        return this.userIndex.search(embedding, { count: options?.count });
     }
 
     public getAllUsers(): string[] {

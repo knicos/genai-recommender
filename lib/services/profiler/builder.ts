@@ -1,9 +1,10 @@
 import { UserNodeId } from '../graph/graphTypes';
 import { getContentAffinities, getTopicAffinities, getUserAffinities } from './affinities';
-import { generateEmbedding } from './userEmbedding';
-import { Affinities, UserNodeData } from './profilerTypes';
+import { generateEmbedding, generateLabelEmbedding } from './userEmbedding';
+import { Affinities, ProfilingOptions, UserNodeData } from './profilerTypes';
 import { GraphService } from '../graph';
 import { ContentService } from '../content';
+import { Embedding } from '@base/main';
 
 const PROFILE_COUNTS = 10;
 
@@ -12,19 +13,25 @@ export function buildUserProfile(
     graph: GraphService,
     content: ContentService,
     id: UserNodeId,
-    data?: UserNodeData
+    data?: UserNodeData,
+    options?: ProfilingOptions
 ): UserNodeData {
     const aid = id;
     const affinities: Affinities = {
-        topics: getTopicAffinities(graph, aid, PROFILE_COUNTS),
-        contents: getContentAffinities(graph, aid, PROFILE_COUNTS),
+        topics: getTopicAffinities(graph, aid, options?.summarySize || PROFILE_COUNTS),
+        contents: getContentAffinities(graph, aid, options?.summarySize || PROFILE_COUNTS),
         users: getUserAffinities(),
     };
 
     // const seenItems = getRelated('seen', aid, { period: TIME_WINDOW });
 
     // Update the embedding
-    const embedding = generateEmbedding(graph, content, aid);
+    let embedding: Embedding;
+    if (options?.embeddingType === 'labels') {
+        embedding = generateLabelEmbedding(graph, affinities.topics.topics);
+    } else {
+        embedding = generateEmbedding(graph, content, aid, options);
+    }
 
     const image = content.getSimilarContent(
         embedding,
@@ -39,6 +46,7 @@ export function buildUserProfile(
 
     data.affinities = affinities;
     data.embeddings.taste = embedding;
+    data.embeddings.type = options?.embeddingType || 'taste';
     data.image = image;
     data.engagement = affinities.contents.contents.reduce((s, v) => s + v.weight, 0);
     data.lastUpdated = Date.now();

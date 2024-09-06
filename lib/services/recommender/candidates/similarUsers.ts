@@ -14,7 +14,7 @@ function getSimilarUserImages(profiler: ProfilerService, profile: UserNodeData) 
     // First, find similar users.
     //const similar = getRelated('similar', profile.id, { count: NUM_SIMILAR_USERS, timeDecay: 0.5, period: MIN20 });
     const similar = profiler
-        .getSimilarUsers(profile.embeddings.taste, NUM_SIMILAR_USERS)
+        .getSimilarUsers(profile.embeddings.taste, { count: NUM_SIMILAR_USERS })
         .filter((s) => s.id !== profile.id && s.weight > 0);
 
     // For each similar user, get their favourite images.

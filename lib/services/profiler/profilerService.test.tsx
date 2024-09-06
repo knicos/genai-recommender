@@ -107,6 +107,20 @@ describe('ProfilerService', () => {
         });
     });
 
+    describe('Embedding types', () => {
+        it('generates a label based embedding', async ({ expect }) => {
+            service.createUserProfile('user:x', 'TestLabel');
+            graph.addNode('topic', 'topic:x');
+            graph.addEdge('topic', 'user:x', 'topic:x', 1, Date.now() - 1000);
+
+            service.setOptions({ embeddingType: 'labels' });
+            const profile = service.getUserProfile('user:x');
+            expect(profile.embeddings.type).toBe('labels');
+            expect(profile.embeddings.taste).toHaveLength(1);
+            expect(profile.embeddings.taste[0]).toBe(1);
+        });
+    });
+
     describe('getUserContent()', () => {
         it('returns all authored content in chronological order', async ({ expect }) => {
             service.createUserProfile('user:xyz', 'TestUser6');
