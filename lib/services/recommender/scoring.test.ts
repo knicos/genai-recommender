@@ -104,8 +104,6 @@ describe('Scoring.scoringProbability()', () => {
             selection: 'distribution',
         });
 
-        console.log(scored);
-
         expect(scored).toHaveLength(4);
         expect(scored[1].probability).toBe(scored[2].probability);
     });

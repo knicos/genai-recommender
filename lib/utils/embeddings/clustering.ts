@@ -1,5 +1,5 @@
 import { NodeID } from '@base/services/graph/graphTypes';
-import { Embedding, embeddingLength } from './general';
+import { Embedding, embeddingLength, normalise } from './general';
 import { maxEmbeddingDistance, normCosinesim } from './similarity';
 
 interface ClusterNode {
@@ -41,7 +41,11 @@ export default class HierarchicalEmbeddingCluster {
     public createFeatureVectors() {
         const selected = this.clusters.filter((c) => c.active);
         return this.clusters.map((_, i) =>
-            selected.map((cluster) => (cluster.members.findIndex((v) => v === i) === -1 ? 0 : 1))
+            normalise(
+                selected.map((cluster) => {
+                    return 1 / (cluster.distances[i] + 1);
+                })
+            )
         );
     }
 
