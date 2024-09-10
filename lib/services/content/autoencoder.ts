@@ -74,7 +74,7 @@ export default class AutoEncoder {
                 }
             }),
             layerStructure.length > 0
-                ? tf.layers.dense({ units: dim, activation: 'linear' })
+                ? tf.layers.dense({ units: dim, activation: 'relu' })
                 : tf.layers.dense({
                       units: dim,
                       batchInputShape: [null, inDim],

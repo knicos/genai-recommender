@@ -14,17 +14,17 @@ describe('engagementEmbeddings()', () => {
         graph.addNode('content', 'content:2');
         graph.addNode('content', 'content:3');
 
-        graph.addEdge('engaged', 'user:x', 'content:1', 1);
-        graph.addEdge('engaged', 'user:x', 'content:2', 0.5);
-        graph.addEdge('engaged', 'user:x', 'content:3', 0.1);
-        graph.addEdge('engaged', 'user:y', 'content:1', 0.1);
-        graph.addEdge('engaged', 'user:y', 'content:2', 0.5);
-        graph.addEdge('engaged', 'user:y', 'content:3', 1);
+        graph.addEdge('coengaged', 'content:2', 'content:1', 1);
+        graph.addEdge('coengaged', 'content:1', 'content:2', 0.5);
+        graph.addEdge('coengaged', 'content:1', 'content:3', 0.1);
+        graph.addEdge('coengaged', 'content:3', 'content:1', 0.1);
+        graph.addEdge('coengaged', 'content:3', 'content:2', 0.5);
+        graph.addEdge('coengaged', 'content:2', 'content:3', 1);
 
-        const embeddings = engagementEmbedding(graph);
+        const embeddings = engagementEmbedding(graph, graph.getNodesByType('content'), graph.getNodesByType('content'));
         expect(embeddings).toHaveLength(3);
-        expect(embeddings[0]).toHaveLength(2);
-        expect(embeddings[0][0]).toBeGreaterThan(0.9);
-        expect(embeddings[0][1]).toBeLessThan(0.1);
+        expect(embeddings[0]).toHaveLength(3);
+        expect(embeddings[0][0]).toBe(0);
+        expect(embeddings[0][1]).toBe(0.5);
     });
 });

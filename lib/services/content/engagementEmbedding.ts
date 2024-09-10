@@ -1,9 +1,6 @@
-import { normalise } from '@base/main';
-import { GraphService } from '../graph';
+import { ContentNodeId, GraphService } from '../graph';
 
-export function engagementEmbedding(graph: GraphService) {
-    const content = graph.getNodesByType('content');
-    const users = graph.getNodesByType('user');
-    const engagements = content.map((c) => normalise(users.map((u) => graph.getEdgeWeights('engaged', u, c)[0] || 0)));
+export function engagementEmbedding(graph: GraphService, images: ContentNodeId[], fixedImages: ContentNodeId[]) {
+    const engagements = images.map((c) => fixedImages.map((v) => graph.getEdgeWeights('coengaged', c, v)[0] || 0));
     return engagements;
 }

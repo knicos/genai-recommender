@@ -15,10 +15,10 @@ export interface CommentDataItem {
     comments: CommentEntry[];
 }
 
-export type EncoderType = 'mobilenet' | 'engagement' | 'coengagement';
-
 export interface EncoderOptions {
-    type?: EncoderType;
+    noEngagementFeatures?: boolean;
+    noTagFeatures?: boolean;
+    noContentFeatures?: boolean;
     epochs?: number;
     dims?: number;
     layers?: number[];
@@ -120,12 +120,27 @@ export default class ContentService {
         }
 
         const images = Array.from(this.state.dataStore.values());
-        let raw: Embedding[];
-        if (opts?.type === 'engagement') {
-            raw = engagementEmbedding(this.graph);
-        } else {
-            raw = await this.mobilenet.generateEmbeddings(images);
-        }
+        const imageIds = Array.from(this.state.dataStore.keys());
+        const fixedImages = imageIds.filter((img) => !this.getContentMetadata(img)?.authorId);
+        const engageFeatures: Embedding[] = opts?.noEngagementFeatures
+            ? []
+            : engagementEmbedding(this.graph, imageIds, fixedImages);
+        const contentFeatures: Embedding[] = opts?.noContentFeatures
+            ? []
+            : await this.mobilenet.generateEmbeddings(images);
+
+        const labels = this.graph.getNodesByType('topic');
+        labels.sort();
+        const labelFeatures: Embedding[] = opts?.noTagFeatures
+            ? []
+            : imageIds.map((id) => labels.map((l) => (this.graph.getEdge('topic', id, l) ? 1 : 0)));
+
+        const raw = images.map((_, i) => [1, ...engageFeatures[i], ...contentFeatures[i], ...labelFeatures[i]]);
+        const empty = new Array<number>(fixedImages.length).fill(0);
+        const raw2 = images.map((_, i) => [0, ...empty, ...contentFeatures[i], ...labelFeatures[i]]);
+
+        const combined = [...raw, ...raw2];
+
         if (opts?.onMobileNetDone) {
             opts.onMobileNetDone();
         }
@@ -135,7 +150,7 @@ export default class ContentService {
         this.encoder = new AutoEncoder();
         this.encoder.create(opts?.dims || 20, inDim, opts?.layers || []);
 
-        await this.encoder.train(raw, epochs, (e, logs) => {
+        await this.encoder.train(combined, epochs, (e, logs) => {
             if (opts?.onEpoch) {
                 opts.onEpoch(e, logs?.loss || 0, logs?.val_loss || 0);
             }
@@ -200,14 +215,24 @@ export default class ContentService {
         });
     }
 
-    async createEmbedding(data: string | HTMLCanvasElement): Promise<Embedding> {
+    async createEmbedding(data: string | HTMLCanvasElement, meta: ContentMetadata): Promise<Embedding> {
         if (!this.encoder) {
             throw new Error('no_autoencoder');
         }
         if (!this.mobilenet) {
             this.mobilenet = new MobileNetEmbedding();
         }
-        const raw = await this.mobilenet.generateEmbedding(data);
+
+        const imageIds = Array.from(this.state.dataStore.keys());
+        const fixedImages = imageIds.filter((img) => !this.getContentMetadata(img)?.authorId);
+
+        const contentFeatures = await this.mobilenet.generateEmbedding(data);
+        const engageFeatures = new Array<number>(fixedImages.length).fill(0);
+        const labels = this.graph.getNodesByType('topic');
+        labels.sort();
+        const labelFeatures: Embedding = labels.map((l) => (meta.labels.findIndex((v) => v.label === l) >= 0 ? 1 : 0));
+
+        const raw = [0, ...engageFeatures, ...contentFeatures, ...labelFeatures];
         const embedding = this.encoder.generate([raw]);
         return embedding[0];
     }
@@ -249,7 +274,7 @@ export default class ContentService {
         this.state.dataStore.set(cid, data);
 
         if (!meta.embedding) {
-            this.createEmbedding(data)
+            this.createEmbedding(data, meta)
                 .then((e) => {
                     meta.embedding = normalise(e);
                 })
