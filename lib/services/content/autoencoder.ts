@@ -3,6 +3,7 @@ import JSZip from 'jszip';
 
 export default class AutoEncoder {
     public model?: tf.LayersModel;
+    public metadata?: unknown;
     public encoderLayers?: tf.layers.Layer[];
     public decoderLayers?: tf.layers.Layer[];
     private trained: boolean = false;
@@ -121,6 +122,10 @@ export default class AutoEncoder {
                             weightsManifest: [{ paths: ['./weights.bin'], weights: artifact.weightSpecs }],
                         });
                         zip.file('model.json', model);
+                    }
+
+                    if (this.metadata) {
+                        zip.file('metadata.json', JSON.stringify(this.metadata));
                     }
 
                     zipData = await zip.generateAsync({ type: 'blob' });
