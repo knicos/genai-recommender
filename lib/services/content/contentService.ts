@@ -197,11 +197,12 @@ export default class ContentService {
         this.encoder.metadata = opts || {};
         this.encoder.create(opts?.dims || 20, inDim, opts?.layers || []);
 
-        await this.encoder.train(raw, epochs, (e, logs) => {
+        const history = await this.encoder.train(raw, epochs, (e, logs) => {
             if (opts?.onEpoch) {
                 opts.onEpoch(e, logs?.loss || 0, logs?.val_loss || 0);
             }
         });
+        console.log('History', history);
         if (opts?.onTrained) {
             opts.onTrained();
         }

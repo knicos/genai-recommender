@@ -61,40 +61,61 @@ export default class AutoEncoder {
         const model = tf.sequential();
         const layerStructure = layers || [];
         const encoder = [
-            ...layerStructure.map((units, ix) => {
-                if (ix === 0) {
-                    return tf.layers.dense({
-                        units,
-                        batchInputShape: [null, inDim],
-                        activation: 'relu',
-                        kernelInitializer: 'randomNormal',
-                        biasInitializer: 'ones',
-                    });
-                } else {
-                    return tf.layers.dense({ units, activation: 'relu' });
-                }
+            tf.layers.dense({
+                units: layerStructure.length > 0 ? layerStructure[0] : dim,
+                inputShape: [inDim],
+                activation: layerStructure.length > 0 ? 'relu' : 'linear',
+                kernelInitializer: 'glorotNormal',
+                biasInitializer: 'zeros',
+                kernelRegularizer: layerStructure.length > 0 ? undefined : tf.regularizers.l1({ l1: 0.01 }),
             }),
-            layerStructure.length > 0
-                ? tf.layers.dense({ units: dim, activation: 'relu', kernelRegularizer: tf.regularizers.l1() })
-                : tf.layers.dense({
-                      units: dim,
-                      batchInputShape: [null, inDim],
-                      activation: 'relu',
-                      kernelInitializer: 'randomNormal',
-                      biasInitializer: 'ones',
-                      kernelRegularizer: tf.regularizers.l1(),
-                  }),
+            ...layerStructure.slice(1).map((units) =>
+                tf.layers.dense({
+                    units,
+                    activation: 'relu',
+                    kernelInitializer: 'glorotNormal',
+                    biasInitializer: 'zeros',
+                })
+            ),
         ];
+
+        // Add bottleneck layer
+        if (layerStructure.length > 0) {
+            encoder.push(
+                tf.layers.dense({
+                    units: dim,
+                    activation: 'linear',
+                    kernelInitializer: 'glorotNormal',
+                    biasInitializer: 'zeros',
+                    kernelRegularizer: tf.regularizers.l1({ l1: 0.01 }),
+                })
+            );
+        }
+
+        // Decoder
         const decoder = [
-            ...layerStructure.reverse().map((units) => {
-                return tf.layers.dense({ units, activation: 'relu' });
+            ...layerStructure
+                .slice()
+                .reverse()
+                .map((units) =>
+                    tf.layers.dense({
+                        units,
+                        activation: 'relu',
+                        kernelInitializer: 'glorotNormal',
+                        biasInitializer: 'zeros',
+                    })
+                ),
+            tf.layers.dense({
+                units: inDim,
+                activation: 'linear',
+                kernelInitializer: 'glorotNormal',
+                biasInitializer: 'zeros',
             }),
-            tf.layers.dense({ units: inDim, activation: 'linear' }),
         ];
 
         encoder.forEach((e) => model.add(e));
         decoder.forEach((d) => model.add(d));
-        model.compile({ optimizer: 'sgd', loss: 'meanSquaredError' });
+        model.compile({ optimizer: tf.train.adam(0.001), loss: 'meanSquaredError' });
         this.model = model;
         this.encoderLayers = encoder;
         this.decoderLayers = decoder;
