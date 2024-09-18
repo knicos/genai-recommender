@@ -75,13 +75,14 @@ export default class AutoEncoder {
                 }
             }),
             layerStructure.length > 0
-                ? tf.layers.dense({ units: dim, activation: 'relu' })
+                ? tf.layers.dense({ units: dim, activation: 'relu', kernelRegularizer: tf.regularizers.l1() })
                 : tf.layers.dense({
                       units: dim,
                       batchInputShape: [null, inDim],
                       activation: 'relu',
                       kernelInitializer: 'randomNormal',
                       biasInitializer: 'ones',
+                      kernelRegularizer: tf.regularizers.l1(),
                   }),
         ];
         const decoder = [
