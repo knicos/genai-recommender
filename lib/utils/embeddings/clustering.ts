@@ -25,9 +25,9 @@ export default class HierarchicalEmbeddingCluster {
 
     constructor(options: ClusterOptions) {
         this.k = options.k || 2;
-        this.maxClusters = options.maxClusters || options.k || 2;
+        this.maxClusters = options.maxClusters || 10000;
         this.maxDistance = options.maxDistance || 1;
-        this.minClusterSize = options.minClusterSize || 1000;
+        this.minClusterSize = options.minClusterSize || 10000;
     }
 
     public createFeatureVector(id: NodeID) {
@@ -78,7 +78,7 @@ export default class HierarchicalEmbeddingCluster {
             count > this.maxClusters ||
             (count > this.k && minPair.d <= this.maxDistance && csize < this.minClusterSize)
         ) {
-            minPair.d = 1; // Reset distance
+            minPair.d = 2; // Reset distance
             csize = this.clusters.length;
             // Find minimum distance
             for (let i = 0; i < this.clusters.length; ++i) {
