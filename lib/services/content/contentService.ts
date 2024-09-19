@@ -5,7 +5,7 @@ import { CommentEntry, ContentMetadata, ContentStats, ContentStatsId } from './c
 import { Embedding, embeddingSimilarity, normalise } from '@base/utils/embedding';
 import { anonString } from '@base/utils/anon';
 import MobileNetEmbedding from './mobilenet';
-import AutoEncoder from './autoencoder';
+import AutoEncoder, { AutoEncoderOptions } from './autoencoder';
 import ServiceBroker from '../broker';
 import { LogActivity } from '../actionlogger/actionlogTypes';
 import { engagementEmbedding } from './engagementEmbedding';
@@ -15,13 +15,12 @@ export interface CommentDataItem {
     comments: CommentEntry[];
 }
 
-export interface EncoderOptions {
+export interface EncoderOptions extends AutoEncoderOptions {
     noEngagementFeatures?: boolean;
     noTagFeatures?: boolean;
     noContentFeatures?: boolean;
     epochs?: number;
     dims?: number;
-    layers?: number[];
     onEpoch?: (epoch: number, loss: number, validationLoss: number) => void;
     onTrained?: () => void;
     onMobileNetDone?: () => void;
@@ -195,7 +194,7 @@ export default class ContentService {
 
         this.encoder = new AutoEncoder();
         this.encoder.metadata = opts || {};
-        this.encoder.create(opts?.dims || 20, inDim, opts?.layers || []);
+        this.encoder.create(opts?.dims || 20, inDim, opts);
 
         const history = await this.encoder.train(raw, epochs, (e, logs) => {
             if (opts?.onEpoch) {

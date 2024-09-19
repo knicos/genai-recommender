@@ -1,6 +1,15 @@
 import * as tf from '@tensorflow/tfjs';
 import JSZip from 'jszip';
 
+export interface AutoEncoderOptions {
+    layers?: number[];
+    learningRate?: number;
+    l1?: number;
+    noRegularization?: boolean;
+    outputActivation?: 'linear' | 'sigmoid' | 'tanh' | 'relu';
+    loss?: 'meanSquaredError' | 'cosineDistance';
+}
+
 export default class AutoEncoder {
     public model?: tf.LayersModel;
     public metadata?: unknown;
@@ -56,18 +65,21 @@ export default class AutoEncoder {
         }
     }
 
-    public create(dim: number, inDim = 1280, layers?: number[]) {
+    public create(dim: number, inDim = 1280, opts?: AutoEncoderOptions) {
         // Now use an autoencoder to reduce it.
         const model = tf.sequential();
-        const layerStructure = layers || [];
+        const layerStructure = opts?.layers || [];
         const encoder = [
             tf.layers.dense({
                 units: layerStructure.length > 0 ? layerStructure[0] : dim,
                 inputShape: [inDim],
-                activation: layerStructure.length > 0 ? 'relu' : 'linear',
+                activation: layerStructure.length > 0 ? 'relu' : opts?.outputActivation || 'linear',
                 kernelInitializer: 'glorotNormal',
                 biasInitializer: 'zeros',
-                kernelRegularizer: layerStructure.length > 0 ? undefined : tf.regularizers.l1({ l1: 0.01 }),
+                kernelRegularizer:
+                    layerStructure.length > 0 && !opts?.noRegularization
+                        ? undefined
+                        : tf.regularizers.l1({ l1: opts?.l1 || 0.01 }),
             }),
             ...layerStructure.slice(1).map((units) =>
                 tf.layers.dense({
@@ -84,10 +96,12 @@ export default class AutoEncoder {
             encoder.push(
                 tf.layers.dense({
                     units: dim,
-                    activation: 'linear',
+                    activation: opts?.outputActivation || 'linear',
                     kernelInitializer: 'glorotNormal',
                     biasInitializer: 'zeros',
-                    kernelRegularizer: tf.regularizers.l1({ l1: 0.01 }),
+                    kernelRegularizer: opts?.noRegularization
+                        ? undefined
+                        : tf.regularizers.l1({ l1: opts?.l1 || 0.01 }),
                 })
             );
         }
@@ -115,7 +129,10 @@ export default class AutoEncoder {
 
         encoder.forEach((e) => model.add(e));
         decoder.forEach((d) => model.add(d));
-        model.compile({ optimizer: tf.train.adam(0.001), loss: 'meanSquaredError' });
+        model.compile({
+            optimizer: tf.train.adam(opts?.learningRate || 0.001),
+            loss: opts?.loss || 'meanSquaredError',
+        });
         this.model = model;
         this.encoderLayers = encoder;
         this.decoderLayers = decoder;
