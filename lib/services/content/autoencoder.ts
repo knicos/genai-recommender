@@ -7,7 +7,7 @@ export interface AutoEncoderOptions {
     l1?: number;
     noRegularization?: boolean;
     outputActivation?: 'linear' | 'sigmoid' | 'tanh' | 'relu';
-    loss?: 'meanSquaredError' | 'cosineDistance';
+    loss?: 'meanSquaredError' | 'cosineProximity';
 }
 
 export default class AutoEncoder {

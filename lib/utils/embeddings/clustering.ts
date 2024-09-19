@@ -10,6 +10,7 @@ interface ClusterNode {
 
 export interface ClusterOptions {
     k?: number;
+    maxClusters?: number;
     maxDistance?: number;
     minClusterSize?: number;
 }
@@ -17,12 +18,14 @@ export interface ClusterOptions {
 export default class HierarchicalEmbeddingCluster {
     private k: number;
     private maxDistance: number;
+    private maxClusters: number;
     private minClusterSize: number;
     private clusters: ClusterNode[] = [];
     private indexMap = new Map<NodeID, number>();
 
     constructor(options: ClusterOptions) {
         this.k = options.k || 2;
+        this.maxClusters = options.maxClusters || options.k || 2;
         this.maxDistance = options.maxDistance || 1;
         this.minClusterSize = options.minClusterSize || 1000;
     }
@@ -71,7 +74,10 @@ export default class HierarchicalEmbeddingCluster {
         let count = this.clusters.length;
         let csize = 1;
 
-        while (count > this.k && minPair.d <= this.maxDistance && csize < this.minClusterSize) {
+        while (
+            count > this.maxClusters ||
+            (count > this.k && minPair.d <= this.maxDistance && csize < this.minClusterSize)
+        ) {
             minPair.d = 1; // Reset distance
             csize = this.clusters.length;
             // Find minimum distance
