@@ -30,6 +30,7 @@ export interface ContentMetadata {
     labels: WeightedLabel[];
     embedding?: number[];
     point?: [number, number];
+    cluster?: number;
 }
 
 export interface ImageEntity {
