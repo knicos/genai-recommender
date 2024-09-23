@@ -73,6 +73,24 @@ describe('ContentService', () => {
         });
     });
 
+    describe('addLabel', () => {
+        it('emits a meta update event', async ({ expect }) => {
+            const meta = {
+                labels: [],
+                id: 'xyz',
+                author: 'TestAuthor',
+            };
+            service.addContentMeta(meta);
+
+            const eventFn = vi.fn();
+            broker.on('contentmeta', eventFn);
+
+            service.addLabel('content:xyz', 'testlabel');
+            expect(eventFn).toHaveBeenCalledWith('content:xyz');
+            expect(meta.labels).toContainEqual({ label: 'testlabel', weight: 1 });
+        });
+    });
+
     describe('getContentData', () => {
         it('can get existing content data', async ({ expect }) => {
             service.addContent('someurl', {

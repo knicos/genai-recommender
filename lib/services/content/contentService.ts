@@ -325,6 +325,9 @@ export default class ContentService {
                 this.graph.addEdge('author', meta.authorId, cid);
                 this.graph.addEdge('author', cid, meta.authorId);
             }
+
+            this.broker.emit('contentmeta', cid);
+            this.broker.emit(`contentmeta-${cid}`);
         } catch (e) {
             console.warn(e);
         }
@@ -355,6 +358,58 @@ export default class ContentService {
     public addContent(data: string, meta: ContentMetadata) {
         this.addContentMeta(meta);
         this.addContentData(data, meta);
+    }
+
+    public getAllLabels(): string[] {
+        const set = new Set<string>();
+        this.state.metaStore.forEach((meta) => {
+            meta.labels.forEach((l) => {
+                set.add(l.label);
+            });
+        });
+        return Array.from(set);
+    }
+
+    public addLabel(id: ContentNodeId, label: string, weight = 1) {
+        const meta = this.getContentMetadata(id);
+        if (meta) {
+            const set = new Set(meta.labels.map((l) => l.label));
+            if (!set.has(label)) {
+                meta.labels.push({ label, weight });
+                this.broker.emit('contentmeta', id);
+                this.broker.emit(`contentmeta-${id}`);
+            }
+        }
+    }
+
+    public removeLabel(id: ContentNodeId, label: string) {
+        const meta = this.getContentMetadata(id);
+        if (meta) {
+            const set = new Set(meta.labels.map((l) => l.label));
+            if (set.has(label)) {
+                meta.labels = meta.labels.filter((l) => l.label !== label);
+                this.broker.emit('contentmeta', id);
+                this.broker.emit(`contentmeta-${id}`);
+            }
+        }
+    }
+
+    public clearLabels(id: ContentNodeId) {
+        const meta = this.getContentMetadata(id);
+        if (meta) {
+            meta.labels = [];
+            this.broker.emit('contentmeta', id);
+            this.broker.emit(`contentmeta-${id}`);
+        }
+    }
+
+    public updateMeta(id: ContentNodeId, update: Partial<ContentMetadata>) {
+        const meta = this.getContentMetadata(id);
+        if (meta) {
+            Object.assign(meta, update);
+            this.broker.emit('contentmeta', id);
+            this.broker.emit(`contentmeta-${id}`);
+        }
     }
 
     public postContent(data: string, meta: ContentMetadata) {
