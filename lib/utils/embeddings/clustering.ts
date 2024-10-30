@@ -6,6 +6,7 @@ interface ClusterNode {
     active: boolean;
     members: number[];
     distances: number[];
+    centralMember?: number;
 }
 
 export interface ClusterOptions {
@@ -104,7 +105,7 @@ export default class HierarchicalEmbeddingCluster {
             // Only update the distances that changed.
             const cembed = this.clusters[minPair.a].members.map((m) => data[m].embedding);
             this.clusters.forEach((c, ix) => {
-                if (c.active && ix !== minPair.a) {
+                if (c.active) {
                     const d = maxEmbeddingDistance(
                         c.members.map((m) => data[m].embedding),
                         cembed
@@ -115,10 +116,24 @@ export default class HierarchicalEmbeddingCluster {
             });
             --count;
         }
+
+        this.clusters.forEach((cluster) => {
+            if (cluster.active) {
+                let totalW = 0;
+                let s = 0;
+                cluster.members.forEach((m) => {
+                    const w = (cluster.distances[m] + 1) / 2;
+                    totalW += w * w;
+                    s += w * w * m;
+                });
+                cluster.centralMember = totalW > 0 ? s / totalW : 0;
+            }
+        });
     }
 
     public getClusters() {
         const filtered = this.clusters.filter((c) => c.active);
+        filtered.sort((a, b) => (a.centralMember || 0) - (b.centralMember || 0));
         return filtered.map((c) => c.members);
     }
 }
