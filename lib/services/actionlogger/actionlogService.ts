@@ -157,6 +157,10 @@ export default class ActionLogService {
         return result.reverse();
     }
 
+    public removeLogs(id: UserNodeId) {
+        this.state.deleteLogs(id);
+    }
+
     public anonLogs() {
         this.state.logs.forEach((entry) => {
             entry.forEach((log) => {

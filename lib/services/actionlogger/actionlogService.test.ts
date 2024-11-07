@@ -100,4 +100,17 @@ describe('ActionLogService', () => {
             expect(results[1].timestamp).toBe(14);
         });
     });
+
+    describe('Action Logs.deleteLogs', () => {
+        it('will remove all user logs', async ({ expect }) => {
+            const broker = new ServiceBroker();
+            const service = new ActionLogService(broker);
+            service.addLogEntry({ timestamp: 10, activity: 'like' }, 'user:xyz');
+            const l1 = service.getActionLog('user:xyz');
+            expect(l1).toHaveLength(1);
+            service.removeLogs('user:xyz');
+            const l2 = service.getActionLog('user:xyz');
+            expect(l2).toHaveLength(0);
+        });
+    });
 });

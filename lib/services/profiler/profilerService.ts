@@ -208,6 +208,8 @@ export default class ProfilerService {
 
     public removeProfile(id: UserNodeId) {
         this.internalProfiles.delete(id);
+        this.outOfDate.delete(id);
+        this.graph.removeNode(id);
     }
 
     public getUserData(id: UserNodeId) {
