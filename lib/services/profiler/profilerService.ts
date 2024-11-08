@@ -209,6 +209,7 @@ export default class ProfilerService {
     public removeProfile(id: UserNodeId) {
         this.internalProfiles.delete(id);
         this.outOfDate.delete(id);
+        this.userIndex.remove(id);
         this.graph.removeNode(id);
     }
 
@@ -358,8 +359,13 @@ export default class ProfilerService {
         // Force all profiles to be up-to-date
         if (this.outOfDate.size > 0) {
             this.outOfDate.forEach((u) => {
-                this.getUserProfile(u);
+                try {
+                    this.getUserProfile(u);
+                } catch (e) {
+                    console.error('Profile error', e);
+                }
             });
+            this.outOfDate.clear();
         }
 
         // TODO: Rebuild the index if the data type or algorithm changes.
