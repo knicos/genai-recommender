@@ -17,7 +17,7 @@ const ACTIVITY_VALUES: { [key in LogActivity]: number } = {
     follow: 0.5,
     unfollow: -0.5,
     comment: 0.6,
-    hide: NaN,
+    hide: -0.5,
     begin: NaN,
     end: NaN,
     engagement: NaN,
@@ -55,6 +55,7 @@ export function engagementFromLog(log: LogEntry[]) {
             case 'share_public':
             case 'follow':
             case 'unfollow':
+            case 'hide':
                 sum += activityEngagement(l.activity);
                 break;
         }
