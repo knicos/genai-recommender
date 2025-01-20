@@ -31,5 +31,6 @@ export function createEmptyProfile(id: UserNodeId, name: string): UserNodeData {
         lastUpdated: Date.now(),
         followerCount: 0,
         followsCount: 0,
+        cold: 1,
     };
 }

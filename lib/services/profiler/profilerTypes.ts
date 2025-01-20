@@ -45,6 +45,7 @@ export interface UserNodeData {
     lastUpdated: number;
     followerCount: number;
     followsCount: number;
+    cold: number;
 }
 
 export interface InternalUserProfile {

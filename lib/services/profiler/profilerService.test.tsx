@@ -81,6 +81,18 @@ describe('ProfilerService', () => {
             expect(graph.getEdge('engaged', 'user:xyz', 'content:zzz')?.weight).toBe(1);
             expect(graph.getEdge('engaged', 'content:zzz', 'user:xyz')?.weight).toBe(1);
         });
+
+        it('reduces profile coldness', async ({ expect }) => {
+            content.addContent('data', { id: 'zzz', labels: [] });
+            service.createUserProfile('user:xyz', 'TestUser5');
+
+            const p1 = service.getUserProfile('user:xyz');
+            expect(p1.cold).toBe(1);
+
+            broker.emit('activity-engagement', 'user:xyz', 'content:zzz', 1, 100);
+            const p2 = service.getUserProfile('user:xyz');
+            expect(p2.cold).toBeLessThan(1);
+        });
     });
 
     describe('Follow activity', () => {

@@ -68,6 +68,7 @@ export interface ScoringOptions {
     excludeSignificance?: boolean;
     selection?: 'rank' | 'distribution';
     weights?: Scores;
+    coldStart?: boolean;
 }
 
 export type RecommendationOptions = ScoringOptions & CandidateOptions;

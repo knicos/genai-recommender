@@ -39,16 +39,16 @@ function calculateSignificance(items: ScoredRecommendation[]) {
     });
 }
 
-function optionsWeights(options?: ScoringOptions) {
+function optionsWeights(hotness: number, options?: ScoringOptions) {
     const weights: Scores = {
-        taste: options?.noTasteScore ? 0 : options?.weights?.taste || 2,
-        coengagement: options?.noCoengagementScore ? 0 : options?.weights?.coengagement || 1,
-        viewing: options?.noViewingScore ? 0 : options?.weights?.viewing || 1.2,
-        sharing: options?.noSharingScore ? 0 : options?.weights?.sharing || 1,
-        commenting: options?.noCommentingScore ? 0 : options?.weights?.commenting || 1.2,
-        popularity: options?.noPopularity ? 0 : options?.weights?.popularity || 1,
-        following: options?.noFollowingScore ? 0 : options?.weights?.following || 1.2,
-        reaction: options?.noReactionScore ? 0 : options?.weights?.reaction || 1,
+        taste: options?.noTasteScore ? 0 : (options?.weights?.taste || 2) * hotness,
+        coengagement: options?.noCoengagementScore ? 0 : (options?.weights?.coengagement || 1) * hotness,
+        viewing: options?.noViewingScore ? 0 : (options?.weights?.viewing || 1.2) * hotness,
+        sharing: options?.noSharingScore ? 0 : (options?.weights?.sharing || 1) * hotness,
+        commenting: options?.noCommentingScore ? 0 : (options?.weights?.commenting || 1.2) * hotness,
+        popularity: options?.noPopularity ? 0 : (options?.weights?.popularity || 1) * hotness, // Normally hotness not wanted
+        following: options?.noFollowingScore ? 0 : (options?.weights?.following || 1.2) * hotness,
+        reaction: options?.noReactionScore ? 0 : (options?.weights?.reaction || 1) * hotness,
         lastSeen: options?.noLastSeenScore ? 0 : options?.weights?.lastSeen || 3,
         random: 0.0,
         lastEngaged: options?.noLastEngagedScore ? 0 : options?.weights?.lastEngaged || 5,
@@ -68,7 +68,7 @@ function calculateScores(
     const features = makeFeatures(graph, content, userId, candidates, profile, options);
     const keys = (features.length > 0 ? Object.keys(features[0]) : []) as (keyof Scores)[];
     const featureVectors = features.map((i) => Object.values(i));
-    const enabledWeights = optionsWeights(options);
+    const enabledWeights = optionsWeights(options?.coldStart ? 1 - (profile.cold || 0) : 1, options);
     const weights = normalise(
         keys.map((k) => {
             const ew = enabledWeights[k];

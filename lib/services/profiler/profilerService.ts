@@ -48,6 +48,8 @@ export default class ProfilerService {
     };
     private userIndex = new EmbeddingIndex<UserNodeId>();
 
+    public coldStartThreshold = 10;
+
     constructor(broker: ServiceBroker, graph: GraphService, content: ContentService) {
         this.broker = broker;
         this.graph = graph;
@@ -79,6 +81,7 @@ export default class ProfilerService {
         this.broker.on('activity-engagement', (id, content, value, timestamp) => {
             this.topicAffinity(id, 'engaged_topic', content, value, timestamp);
             this.contentAffinity(id, content, value, timestamp);
+            this.updateEngagement(id, value);
         });
 
         this.broker.on('logdata-seen', (id, log) =>
@@ -142,6 +145,14 @@ export default class ProfilerService {
         this.graph.addOrAccumulateEdge('engaged', id, content, weight, timestamp);
         this.graph.addOrAccumulateEdge('engaged', content, id, weight, timestamp);
         //addOrAccumulateEdge('last_engaged', id, content, weight, timestamp);
+    }
+
+    private updateEngagement(id: UserNodeId, engagement: number) {
+        const p = this.internalProfiles.get(id);
+        if (p) {
+            p.engagementTotal += engagement;
+            p.seenItems++;
+        }
     }
 
     private processUserNodeChange(id: UserNodeId) {
@@ -334,13 +345,23 @@ export default class ProfilerService {
         const aid = id || this.getCurrentUser();
         const profile = this.internalProfiles.get(aid);
 
-        if (profile && !this.outOfDate.has(aid)) return profile.profile;
+        if (profile && !this.outOfDate.has(aid)) {
+            const cold = profile.engagementTotal / this.coldStartThreshold;
+            profile.profile.cold = Math.max(0, 1 - cold * cold);
+            return profile.profile;
+        }
 
         if (!profile) {
             this.graph.updateNode(aid, createEmptyProfile(aid, 'NoName'));
         }
 
         const newProfile = buildUserProfile(this.graph, this.content, aid, this.getUserData(aid), this.options);
+
+        // Calculate a coldness factor that should indicate how engaged the user is now.
+        // A profile should also be cold to start with, reflecting a lack of profile data.
+        const cold = profile ? profile.engagementTotal / this.coldStartThreshold : 0;
+        newProfile.cold = Math.max(0, 1 - cold * cold);
+
         this.graph.touchNode(aid);
         this.outOfDate.delete(aid);
         this.userIndex.add(aid, newProfile.embeddings.taste);
