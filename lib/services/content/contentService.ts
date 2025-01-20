@@ -1,6 +1,6 @@
 import { getTopicId } from '@base/helpers/topics';
 import { ContentNodeId, GraphService, UserNodeId, WeightedNode } from '../graph';
-import ContentState from './state';
+import ContentState, { ContentData } from './state';
 import { CommentEntry, ContentMetadata, ContentStats, ContentStatsId } from './contentTypes';
 import { Embedding, embeddingSimilarity, normalise } from '@base/utils/embedding';
 import { anonString } from '@base/utils/anon';
@@ -131,7 +131,7 @@ export default class ContentService {
             this.mobilenet = new MobileNetEmbedding();
         }
 
-        const imageData = images.map((i) => this.state.dataStore.get(i) || '');
+        const imageData = images.map((i) => this.state.dataStore.get(i)?.normal || '');
         const fixedImages = images.filter((img) => !this.getContentMetadata(img)?.authorId);
         const engageFeatures: Embedding[] = opts?.noEngagementFeatures
             ? []
@@ -225,12 +225,18 @@ export default class ContentService {
         return !!this.encoder;
     }
 
-    public getContentData(id: ContentNodeId) {
+    public getContentData(id: ContentNodeId, lowRes = false): string | undefined {
         const data = this.state.dataStore.get(id);
         if (!data && this.state.metaStore.has(id)) {
             this.broker.emit('contentmissing', id);
         }
-        return data;
+        if (data) {
+            if (lowRes) {
+                return data.lowRes || data.normal;
+            } else {
+                return data.normal;
+            }
+        }
     }
 
     public getContentMetadata(id: ContentNodeId) {
@@ -333,9 +339,9 @@ export default class ContentService {
         }
     }
 
-    public addContentData(data: string, meta: ContentMetadata) {
+    public addContentData(data: string | ContentData, meta: ContentMetadata) {
         const cid: ContentNodeId = `content:${meta.id}`;
-        this.state.dataStore.set(cid, data);
+        this.state.dataStore.set(cid, typeof data === 'string' ? { normal: data } : data);
 
         if (!meta.embedding) {
             this.createEmbedding(cid)
@@ -355,7 +361,7 @@ export default class ContentService {
         this.broker.emit(`contentupdate-${cid}`);
     }
 
-    public addContent(data: string, meta: ContentMetadata) {
+    public addContent(data: string | ContentData, meta: ContentMetadata) {
         this.addContentMeta(meta);
         this.addContentData(data, meta);
     }

@@ -71,6 +71,21 @@ describe('ContentService', () => {
             service.addContentData('somedata', meta);
             expect(eventFn).toHaveBeenCalledWith('content:xyz');
         });
+
+        it('can add low res data', async ({ expect }) => {
+            const meta = {
+                labels: [],
+                id: 'xyz',
+                author: 'TestAuthor',
+            };
+            service.addContentMeta(meta);
+
+            expect(service.hasContent('content:xyz')).toBe(true);
+            expect(service.getContentData('content:xyz')).toBeUndefined();
+            service.addContentData({ normal: 'somedata', lowRes: 'lowres' }, meta);
+            expect(service.getContentData('content:xyz')).toBe('somedata');
+            expect(service.getContentData('content:xyz', true)).toBe('lowres');
+        });
     });
 
     describe('addLabel', () => {
