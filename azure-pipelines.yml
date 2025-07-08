@@ -105,13 +105,13 @@ stages:
                       path: $(System.DefaultWorkingDirectory)/.npm
                   displayName: Cache NPM packages
                 - script: |
-                      echo -e "\n//npm.pkg.github.com/:_authToken=$(GITHUB_TOKEN)" >> ./.npmrc
+                      echo -e "\n//registry.npmjs.org/:_authToken=$(NPM_TOKEN)" >> ./.npmrc
                       npm set cache .npm
                       npm ci
                       npm install
                       npm run build
                       npm version --git-tag-version=false ${BUILD_SOURCEBRANCHNAME}
-                      npm publish
+                      npm publish --access public
           #- job: Github
           #  displayName: Github Mirror
           #  steps:
